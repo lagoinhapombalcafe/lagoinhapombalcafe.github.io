@@ -13,7 +13,7 @@ const getDate=x=>new Date(x).toLocaleTimeString('pt-PT',{timeZone:'Europe/Lisbon
 const states={awaiting_payment:'Aguarda pagamento',queued:'Na fila',preparing:'Em preparação',ready:'Pronto',delivered:'Entregue',cancelled:'Cancelado'};
 const alert=()=>S.notice?`<p class="alert">${E(S.notice)} <button class="small" data-do="dismiss">×</button></p>`:'';
 const header=(title,sub)=>`<section class="hero"><div><span class="eyebrow">LAGOINHA POMBAL · DOMINGOS 9H–10H</span><h1>${title}</h1><p>${sub}</p></div><span class="cup">☕</span></section>`;
-const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente">☕ <strong>LAGOINHA <em>CAFÉ</em></strong></a><nav><a href="#/cliente">Cliente</a>${S.role?`<a href="#/caixa">Caixa</a><a href="#/cozinha">Cozinha</a>${S.role==='admin'?'<a href="#/admin">Administrador</a>':''}`:'<a href="#/caixa">Equipa</a>'}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Pombal · Rua Prof. Veiga Simão, nº 4 · Pedidos presenciais</footer>`;
+const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente">☕ <strong>LAGOINHA <em>CAFÉ</em></strong></a><nav><a href="#/cliente">Cliente</a>${S.role==="admin"?`<a href="#/caixa">Caixa</a><a href="#/cozinha">Cozinha</a><a href="#/admin">Administrador</a>`:S.role==="cashier"?`<a href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a href="#/cozinha">Cozinha</a>`:`<a href="#/caixa">Equipa</a>`}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Pombal · Rua Prof. Veiga Simão, nº 4 · Pedidos presenciais</footer>`;
 function paint(){let r=route(),body;
 if(r==='cliente')body=menu();
 else if(r==='pedido')body=ticket();
