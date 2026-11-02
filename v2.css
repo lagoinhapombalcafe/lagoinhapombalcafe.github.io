@@ -224,3 +224,62 @@ button.ghost:hover:not(:disabled){background:#484037}
 @media print{.checkout-overlay{display:none!important}}
 
 .checkout-dialog .checkout-name-error{color:#ffe5da;background:#58352c;border:1px solid #98624e;border-radius:10px;margin:4px 0 10px;padding:10px 12px;font-weight:700;font-size:13px;line-height:1.4}
+
+
+
+/* Administrativo v3.5 — gráficos de arrecadação e produtos */
+.admin-analytics{padding:28px;background:linear-gradient(150deg,#241f1c,#181819)}
+.admin-analytics .analytics-heading{align-items:center;gap:20px;margin-bottom:20px}
+.admin-analytics .analytics-heading h2{font-size:clamp(25px,3vw,32px)}
+.analytics-month-label{display:grid;gap:7px;color:#d8c9b5;font-size:12px;font-weight:800;min-width:170px}
+.analytics-month-label input{width:100%;background:#161617;border:1px solid #8e6d45;border-radius:11px;padding:11px;color:#f5e1c6;color-scheme:dark;font-size:14px}
+.analytics-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:14px 0 21px}
+.analytics-metrics>div{min-width:0;background:linear-gradient(155deg,#352b23,#211f1d);border:1px solid #57432e;border-radius:15px;padding:16px 14px;display:grid;gap:8px}
+.analytics-metrics span{color:#c5b3a0;font-size:12px;font-weight:700}
+.analytics-metrics strong{color:#f5d6a4;font-size:clamp(21px,2.6vw,30px);line-height:1.1;word-break:break-word}
+.analytics-chart-box{background:#1c1b1b;border:1px solid #4c3d2f;border-radius:18px;padding:24px;min-width:0}
+.analytics-chart-box h3{font-size:19px;font-family:'Inter','Segoe UI',Arial,sans-serif;font-weight:850;color:#fff}
+.analytics-chart-box .muted{font-size:12px;margin:5px 0 18px;color:#bcb0a1}
+.analytics-chart-heading{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.analytics-chart-heading>span{font-size:20px;font-weight:900;color:#f5d6a5}
+.revenue-scroll{overflow-x:auto;overflow-y:hidden;padding-top:30px;margin:0 -4px}
+.revenue-days{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(22px,1fr);gap:4px;min-width:690px;height:218px;border-bottom:1px solid #675139;padding:0 5px 0}
+.revenue-day{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:end;height:100%;position:relative}
+.revenue-bar-area{height:181px;display:flex;flex-direction:column;justify-content:end;align-items:stretch;width:100%;position:relative}
+.revenue-bar{background:transparent;border-radius:6px 6px 0 0;width:100%}
+.revenue-bar.with-sales{background:linear-gradient(180deg,#f7d39b,#d39a50);box-shadow:0 0 15px #dca35830;border:1px solid #f0c78f}
+.revenue-bar-value{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);color:#ead0a7;font-size:9px;white-space:nowrap;font-weight:800;display:none}
+.revenue-day:hover .revenue-bar-value{display:block}
+.revenue-day>span{display:grid;place-items:center;width:100%;height:28px;font-size:10px;color:#aea292;align-self:end}
+.revenue-axis{display:flex;justify-content:space-between;gap:10px;color:#a99984;font-size:11px;margin-top:14px;flex-wrap:wrap}
+.analytics-rankings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+.ranking-row{margin:0 0 15px}
+.ranking-title{display:flex;align-items:center;gap:8px;margin-bottom:7px;line-height:1.35}
+.ranking-number{flex-shrink:0;color:#a28b70;font-size:12px;font-weight:800;min-width:18px}
+.ranking-name{flex:1;min-width:0;font-size:13px;color:#f1e8dc;font-weight:750;overflow-wrap:anywhere}
+.ranking-title strong{font-size:13px;color:#f1d4a8;white-space:nowrap}
+.ranking-track{height:9px;width:100%;background:#41372d;border-radius:20px;overflow:hidden}
+.ranking-track span{height:100%;background:linear-gradient(90deg,#a47b48,#e9bd7e);border-radius:20px;display:block;transition:width .25s}
+.analytics-empty{color:#b9aa96;font-size:13px;padding:25px 2px}
+.analytics-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:20px}
+.analytics-foot>small{color:#b3a494;font-size:11px;line-height:1.5;max-width:660px}
+.analytics-foot .ghost{flex-shrink:0;border:1px solid #6f5438}
+@media(max-width:850px){
+ .analytics-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .analytics-rankings{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+ .admin-analytics{padding:18px}
+ .admin-analytics .analytics-heading{align-items:stretch;flex-direction:column}
+ .analytics-month-label{max-width:none}
+ .analytics-metrics>div{padding:14px 12px}
+ .analytics-chart-box{padding:16px}
+ .analytics-chart-heading{flex-wrap:wrap}
+ .revenue-days{min-width:675px}
+ .analytics-foot{flex-direction:column;align-items:stretch}
+ .analytics-foot .ghost{width:100%}
+}
+@media print{
+ .analytics-month-label,.analytics-foot button{display:none!important}
+ .revenue-scroll{overflow:visible}
+}
