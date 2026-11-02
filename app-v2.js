@@ -1,6 +1,6 @@
 import {CONFIG} from './config.js';
 const $=s=>document.querySelector(s), root=$('#app');
-const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',editProduct:null,editCombo:null,month:'',busy:false,notice:'',checkoutOpen:false,customerName:'',loginEmail:''};
+const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',editProduct:null,editCombo:null,month:'',analytics:null,analyticsError:'',busy:false,notice:'',checkoutOpen:false,customerName:'',loginEmail:''};
 let api;
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const EUR=n=>(Number(n||0)/100).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
@@ -31,7 +31,14 @@ if(!valid(product(S.food)))S.food=S.products.find(p=>p.category==='food'&&valid(
 if(!valid(product(S.drink)))S.drink=S.products.find(p=>p.category==='drink'&&valid(p))?.id||'';
 if(!valid(combo(S.combo)))S.combo=S.combos.find(valid)?.id||'';}
 async function auth(){const {data:{user}}=await api.auth.getUser();S.user=user;S.role=null;if(user){let {data,error}=await api.from('staff_roles').select('role').eq('user_id',user.id).maybeSingle();if(error)throw error;S.role=data?.role||null;}}
-async function loadOrders(){if(!S.role)return;const r=await api.from('orders').select('id,number,customer_name,order_day,created_at,paid_at,total_cents,status,payment_status,cafe_order_lines(item_name,detail,quantity)').order('created_at',{ascending:false}).limit(500);if(r.error)throw r.error;S.orders=r.data||[];if(S.role==='admin'){let ex=await api.from('cafe_expenses').select('*').order('expense_date',{ascending:false}).limit(500);if(ex.error)throw ex.error;S.expenses=ex.data||[];}}
+function loadAnalytics(month){
+ const wanted=month||S.month||DAY().slice(0,7);
+ return api.rpc('get_cafe_admin_analytics_v1',{p_month:wanted}).then(({data,error})=>{
+   if(error)throw error;
+   if((S.month||DAY().slice(0,7))===wanted){S.analytics=data;S.analyticsError='';}
+ });
+}
+async function loadOrders(){if(!S.role)return;const r=await api.from('orders').select('id,number,customer_name,order_day,created_at,paid_at,total_cents,status,payment_status,cafe_order_lines(item_name,detail,quantity)').order('created_at',{ascending:false}).limit(500);if(r.error)throw r.error;S.orders=r.data||[];if(S.role==='admin'){let ex=await api.from('cafe_expenses').select('*').order('expense_date',{ascending:false}).limit(500);if(ex.error)throw ex.error;S.expenses=ex.data||[];if(route()==='admin')await loadAnalytics(S.month||DAY().slice(0,7));}}
 async function loadTicket(){let token=location.hash.split('/')[2];if(!/^[\da-f-]{36}$/i.test(token||'')){S.ticket=null;return;}let r=await api.rpc('get_cafe_ticket_v2',{p_token:token});if(r.error)throw r.error;S.ticket=r.data;}
 async function loadReady(){let r=await api.rpc('get_cafe_ready_names_v1');if(r.error)throw r.error;S.ready=r.data||[];}
 async function work(job){if(S.busy)return;S.busy=true;try{await job();S.notice='';}catch(e){S.notice='Erro: '+(e.message||e);}finally{S.busy=false;paint();}}
@@ -179,11 +186,82 @@ function queue(who){
    (!isCash?'<p class="muted">Depois de marcar Pronto, o pedido sai desta fila e aparece no ecrã de retirada. Não há mais nenhuma ação para a equipa.</p>':'')+
    `<p><a href="#/retirada">Abrir ecrã de clientes prontos ↗</a></p>`;
 }
-function admin(){let opts=[['visao','Resumo'],['produtos','Produtos'],['combos','Combos'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():qr()}`;}
-function overview(){let paid=S.orders.filter(o=>o.order_day===DAY()&&o.payment_status==='paid'&&o.number<9000),ex=S.expenses.filter(x=>x.expense_date===DAY()),a=paid.reduce((s,o)=>s+o.total_cents,0),b=ex.reduce((s,e)=>s+e.amount_cents,0);return `<div class="panel"><div class="panel-head"><h2>Receber encomendas pelo QR Code</h2><span class="status">${S.settings.orders_open?'ABERTO':'FECHADO'}</span></div><button data-do="toggle">${S.settings.orders_open?'Fechar atendimento':'Abrir atendimento'}</button><p class="muted">Pagamentos apenas no balcão. Abra somente quando a equipa estiver preparada.</p></div><div class="metrics"><div>Recebido hoje<b>${EUR(a)}</b></div><div>Despesas hoje<b>${EUR(b)}</b></div><div>Saldo hoje<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paid.length}</b></div></div>`;}
+function analyticsPanel(){
+ const month=S.month||DAY().slice(0,7);
+ const loaded=S.analytics?.month===month;
+ const a=loaded?S.analytics:null;
+ const daysInMonth=new Date(Number(month.slice(0,4)),Number(month.slice(5)),0).getDate();
+ const total=Number(a?.total_cents||0);
+ const count=Number(a?.paid_orders||0);
+ const sold=Number(a?.product_units||0);
+ const daily=new Map((a?.daily||[]).map(d=>[String(d.day).slice(8,10),Number(d.total_cents)||0]));
+ const max=Math.max(1,...Array.from(daily.values()));
+ const bars=Array.from({length:daysInMonth},(_,i)=>{
+   const n=i+1;
+   const value=daily.get(String(n).padStart(2,'0'))||0;
+   const height=value>0?Math.max(7,value/max*100):0;
+   const label=(n===1||n===daysInMonth||n%5===0)?n:'';
+   return `<div class="revenue-day" title="Dia ${n}: ${EUR(value)}" aria-label="Dia ${n}, ${EUR(value)}">
+     <div class="revenue-bar-area">
+       ${value?`<small class="revenue-bar-value">${EUR(value)}</small>`:''}
+       <div class="revenue-bar ${value?'with-sales':''}" style="height:${height.toFixed(2)}%"></div>
+     </div><span>${label}</span>
+   </div>`;
+ }).join('');
+ const products=(a?.products||[]).slice(0,8);
+ const combos=(a?.combos||[]).slice(0,8);
+ const list=(items,withIcon)=>{
+   const maximum=Math.max(1,...items.map(p=>Number(p.quantity)||0));
+   return items.map((p,i)=>{
+     const n=Number(p.quantity)||0;
+     const width=(n/maximum*100).toFixed(2);
+     return `<div class="ranking-row">
+       <div class="ranking-title"><span class="ranking-number">${i+1}.</span><span class="ranking-name">${withIcon?E(p.icon||'☕')+' ':''}${E(p.name)}</span><strong>${n} un.</strong></div>
+       <div class="ranking-track"><span style="width:${width}%"></span></div>
+     </div>`;
+   }).join('');
+ };
+ return `<section class="panel admin-analytics">
+   <div class="panel-head analytics-heading"><div><span class="section-eyebrow">DESEMPENHO DO CAFÉ</span><h2>Gráficos e resultados</h2><p class="muted">Somente pedidos com pagamento confirmado.</p></div>
+     <label class="analytics-month-label">Selecionar mês<input id="stats-month" type="month" value="${E(month)}" min="2025-01" max="2099-12"></label>
+   </div>
+   ${S.analyticsError?`<p class="alert">${E(S.analyticsError)} <button class="small" data-do="refresh-stats">Tentar novamente</button></p>`:''}
+   ${!loaded?'<p class="muted">A carregar as estatísticas do mês…</p>':`
+     <div class="analytics-metrics">
+       <div><span>Arrecadação</span><strong>${EUR(total)}</strong></div>
+       <div><span>Pedidos pagos</span><strong>${count}</strong></div>
+       <div><span>Unidades vendidas</span><strong>${sold}</strong></div>
+       <div><span>Ticket médio</span><strong>${count?EUR(Math.round(total/count)):EUR(0)}</strong></div>
+     </div>
+     <div class="analytics-chart-box">
+       <div class="analytics-chart-heading"><h3>Arrecadação durante o mês</h3><span>${EUR(total)}</span></div>
+       <p class="muted">Valor confirmado por dia · €</p>
+       <div class="revenue-scroll" role="img" aria-label="Gráfico de arrecadação por dia do mês"><div class="revenue-days">${bars}</div></div>
+       <div class="revenue-axis"><span>Dia do mês</span><span>Picos de venda assinalados em dourado</span></div>
+     </div>
+     <div class="analytics-rankings">
+       <div class="analytics-chart-box"><h3>Produtos mais vendidos</h3><p class="muted">Inclui itens individuais e os alimentos e bebidas dentro dos combos.</p>
+       ${products.length?list(products,true):'<p class="analytics-empty">Sem produtos vendidos neste mês.</p>'}</div>
+       <div class="analytics-chart-box"><h3>Combos mais vendidos</h3><p class="muted">Ranking separado pela quantidade de combos vendidos.</p>
+       ${combos.length?list(combos,false):'<p class="analytics-empty">Sem combos vendidos neste mês.</p>'}</div>
+     </div>
+   `}
+   <div class="analytics-foot"><small>Os pedidos de teste não entram nos gráficos. Os valores representam pagamentos confirmados, antes de descontar despesas.</small><button class="small ghost" data-do="refresh-stats">Atualizar gráficos ↻</button></div>
+ </section>`;
+}
+function admin(){let opts=[['visao','Resumo'],['estatisticas','Gráficos'],['produtos','Produtos'],['combos','Combos'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='estatisticas'?analyticsPanel():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():qr()}`;}
+function overview(){
+ const paid=S.orders.filter(o=>o.order_day===DAY()&&o.payment_status==='paid'&&o.number<9000);
+ const ex=S.expenses.filter(x=>x.expense_date===DAY());
+ const a=paid.reduce((s,o)=>s+o.total_cents,0);
+ const b=ex.reduce((s,e)=>s+e.amount_cents,0);
+ return `<div class="panel"><div class="panel-head"><h2>Receber encomendas pelo QR Code</h2><span class="status">${S.settings.orders_open?'ABERTO':'FECHADO'}</span></div><button data-do="toggle">${S.settings.orders_open?'Fechar atendimento':'Abrir atendimento'}</button><p class="muted">Pagamentos apenas no balcão. Abra somente quando a equipa estiver preparada.</p></div>
+ <div class="metrics"><div>Recebido hoje<b>${EUR(a)}</b></div><div>Despesas hoje<b>${EUR(b)}</b></div><div>Saldo hoje<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paid.length}</b></div>
+ ${analyticsPanel()}`;
+}
 function productsPanel(){let p=product(S.editProduct);return `<div class="main-grid"><section class="panel"><div class="panel-head"><h2>Produtos e estoque</h2><button class="small" data-do="edit-product" data-id="">+ Novo</button></div>${S.products.map(x=>`<div class="item"><span class="emoji">${E(x.icon)}</span><div><b>${E(x.name)}</b><small>${x.category==='food'?'Alimento':'Bebida'} · ${x.price_cents===null?'Preço não definido':EUR(x.price_cents)} · Estoque: ${x.stock_qty??'ilimitado'}</small></div><button class="small ghost" data-do="edit-product" data-id="${x.id}">Editar</button></div>`).join('')}</section><section class="panel"><h2>${p?'Editar produto':'Novo produto'}</h2><form id="productForm" class="form-grid"><input type="hidden" name="id" value="${E(p?.id||'')}"><label>Nome<input name="name" required maxlength="60" value="${E(p?.name||'')}"></label><label>Tipo<select name="category"><option value="food" ${p?.category==='food'?'selected':''}>Alimento</option><option value="drink" ${p?.category==='drink'?'selected':''}>Bebida</option></select></label><label>Ícone<input name="icon" maxlength="6" value="${E(p?.icon||'🍽️')}"></label><label>Preço avulso em € (vazio = não vender avulso)<input type="number" step="0.01" min="0.01" name="price" value="${p?.price_cents==null?'':(p.price_cents/100).toFixed(2)}"></label><label>Estoque (vazio = ilimitado)<input type="number" min="0" step="1" name="stock" value="${p?.stock_qty??''}"></label><label>Ordem<input type="number" name="sort" value="${p?.sort_order??10}"></label><label>Estado<select name="active"><option value="true" ${p?.active!==false?'selected':''}>Ativo</option><option value="false" ${p?.active===false?'selected':''}>Oculto</option></select></label><button>Guardar produto</button></form></section></div>`;}
 function combosPanel(){let c=combo(S.editCombo);return `<div class="main-grid"><section class="panel"><div class="panel-head"><h2>Combos cadastrados</h2><button class="small" data-do="edit-combo" data-id="">+ Novo</button></div>${S.combos.map(x=>`<div class="item"><span class="emoji">🥐</span><div><b>${E(x.name)}</b><small>${EUR(x.price_cents)} · ${x.active?'Ativo':'Oculto'} · Estoque: ${x.stock_qty??'ilimitado'}</small></div><button class="small ghost" data-do="edit-combo" data-id="${x.id}">Editar</button></div>`).join('')}</section><section class="panel"><h2>${c?'Editar combo':'Novo combo'}</h2><p class="muted">O combo permite escolher um alimento e uma bebida disponíveis.</p><form id="comboForm" class="form-grid"><input type="hidden" name="id" value="${E(c?.id||'')}"><label>Nome<input name="name" required maxlength="90" value="${E(c?.name||'')}"></label><label>Descrição<input name="description" maxlength="160" value="${E(c?.description||'Escolha 1 alimento e 1 bebida')}"></label><label>Preço em €<input type="number" step="0.01" min="0.01" name="price" required value="${c?(c.price_cents/100).toFixed(2):''}"></label><label>Estoque (vazio = ilimitado)<input type="number" min="0" name="stock" value="${c?.stock_qty??''}"></label><label>Ordem<input type="number" name="sort" value="${c?.sort_order??10}"></label><label>Estado<select name="active"><option value="true" ${c?.active!==false?'selected':''}>Ativo</option><option value="false" ${c?.active===false?'selected':''}>Oculto</option></select></label><button>Guardar combo</button></form></section></div>`;}
-function financePanel(){const month=S.month||DAY().slice(0,7),paid=S.orders.filter(x=>x.order_day.startsWith(month)&&x.payment_status==='paid'&&x.number<9000),ex=S.expenses.filter(x=>x.expense_date.startsWith(month)),a=paid.reduce((n,x)=>n+x.total_cents,0),b=ex.reduce((n,x)=>n+x.amount_cents,0);return `<div class="panel"><div class="panel-head"><h2>Financeiro</h2><label>Mês <input id="month" type="month" value="${month}"></label></div><div class="metrics"><div>Receita confirmada<b>${EUR(a)}</b></div><div>Despesas<b>${EUR(b)}</b></div><div>Saldo<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paid.length}</b></div></div><p><button class="small ghost" data-do="csv">Exportar CSV</button></p><h3>Registar despesa</h3><form id="expenseForm" class="expense-row"><label>Data<input type="date" name="date" required value="${DAY()}"></label><label>Descrição<input name="description" required maxlength="180"></label><label>Categoria<select name="category"><option>Ingredientes</option><option>Embalagens</option><option>Equipamentos</option><option>Outros</option></select></label><label>Valor (€)<input type="number" name="amount" required min="0.01" step="0.01"></label><button>Adicionar</button></form>${ex.map(x=>`<div class="item"><div><b>${E(x.description)}</b><small>${E(x.expense_date)} · ${E(x.category)}</small></div><strong>${EUR(x.amount_cents)}</strong><button class="small ghost" data-do="delete-expense" data-id="${x.id}">Excluir</button></div>`).join('')||'<p class="muted">Sem despesas neste mês.</p>'}<p class="muted">Saldo é receita recebida menos despesas registadas. Não inclui impostos nem custos não lançados.</p></div>`;}
+function financePanel(){const month=S.month||DAY().slice(0,7),paid=S.orders.filter(x=>x.order_day.startsWith(month)&&x.payment_status==='paid'&&x.number<9000),ex=S.expenses.filter(x=>x.expense_date.startsWith(month)),a=S.analytics?.month===month?Number(S.analytics.total_cents):paid.reduce((n,x)=>n+x.total_cents,0),paidCount=S.analytics?.month===month?Number(S.analytics.paid_orders):paid.length,b=ex.reduce((n,x)=>n+x.amount_cents,0);return `<div class="panel"><div class="panel-head"><h2>Financeiro</h2><label>Mês <input id="month" type="month" value="${month}"></label></div><div class="metrics"><div>Receita confirmada<b>${EUR(a)}</b></div><div>Despesas<b>${EUR(b)}</b></div><div>Saldo<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paidCount}</b></div></div><p><button class="small ghost" data-do="csv">Exportar CSV</button></p><h3>Registar despesa</h3><form id="expenseForm" class="expense-row"><label>Data<input type="date" name="date" required value="${DAY()}"></label><label>Descrição<input name="description" required maxlength="180"></label><label>Categoria<select name="category"><option>Ingredientes</option><option>Embalagens</option><option>Equipamentos</option><option>Outros</option></select></label><label>Valor (€)<input type="number" name="amount" required min="0.01" step="0.01"></label><button>Adicionar</button></form>${ex.map(x=>`<div class="item"><div><b>${E(x.description)}</b><small>${E(x.expense_date)} · ${E(x.category)}</small></div><strong>${EUR(x.amount_cents)}</strong><button class="small ghost" data-do="delete-expense" data-id="${x.id}">Excluir</button></div>`).join('')||'<p class="muted">Sem despesas neste mês.</p>'}<p class="muted">Saldo é receita recebida menos despesas registadas. Não inclui impostos nem custos não lançados.</p></div>`;}
 function qr(){let url=location.origin+location.pathname+'#/cliente',img='https://api.qrserver.com/v1/create-qr-code/?size=450x450&data='+encodeURIComponent(url);return `<div class="panel qr"><img src="${img}" alt="QR Code do Lagoinha Café"><div><h2>Faça o pedido pelo telemóvel</h2><p>Sem cadastro. Selecione, receba uma senha e pague no caixa.</p><small>${E(url)}</small><p><button data-do="print">Imprimir QR Code</button></p></div></div>`;}
 function add(x){
   if(S.cart.reduce((total,row)=>total+row.qty,0)+x.qty>20)throw Error('O limite é de 20 artigos por pedido');
@@ -237,13 +315,15 @@ if(k==='refresh'){await sync();return;}
 if(k==='logout'){await api.auth.signOut();S.user=null;S.role=null;location.hash='#/cliente';paint();return;}
 if(k==='order'){let a=b.dataset.act;if(a==='paid'&&!confirm(S.orders.find(o=>o.id===id)?.number>=9000?'Simular a confirmação de pagamento deste pedido de TESTE? Não receba dinheiro.':'Confirmar que recebeu o pagamento presencial?'))return;if(a==='cancel'&&!confirm('Cancelar pedido não pago e devolver os itens ao estoque?'))return;let r=await api.rpc('staff_order_action',{p_order_id:id,p_action:a});if(r.error)throw r.error;await Promise.all([loadOrders(),loadCatalog()]);paint();return;}
 if(k==='tab'){S.tab=b.dataset.tab;paint();return;}
+if(k==='refresh-stats'){await loadAnalytics(S.month||DAY().slice(0,7));paint();return;}
 if(k==='edit-product'){S.editProduct=id||null;paint();return;}
 if(k==='edit-combo'){S.editCombo=id||null;paint();return;}
 if(k==='toggle'){if(!S.settings.orders_open&&!confirm('Abrir pedidos reais para os clientes?'))return;let r=await api.from('cafe_settings').update({orders_open:!S.settings.orders_open}).eq('id',1);if(r.error)throw r.error;await loadCatalog();paint();return;}
 if(k==='delete-expense'){if(!confirm('Excluir despesa?'))return;let r=await api.from('cafe_expenses').delete().eq('id',id);if(r.error)throw r.error;await loadOrders();paint();return;}
 if(k==='csv'){csv();return;}if(k==='print'){window.print();return;}
 }catch(ex){S.busy=false;S.notice='Erro: '+ex.message;paint();}});
-root.addEventListener('change',e=>{let t=e.target;if(t.id==='food')S.food=t.value;if(t.id==='drink')S.drink=t.value;if(t.id==='qty')S.qty=Math.max(1,Math.min(20,Number(t.value)||1));if(t.id==='month'){S.month=t.value;paint();}});
+root.addEventListener('change',e=>{let t=e.target;if(t.id==='food')S.food=t.value;if(t.id==='drink')S.drink=t.value;if(t.id==='qty')S.qty=Math.max(1,Math.min(20,Number(t.value)||1));if(t.id==='month'){S.month=t.value;S.analytics=null;paint();loadAnalytics(S.month).then(()=>paint()).catch(ex=>{S.analyticsError=ex.message;paint();});}
+if(t.id==='stats-month'){S.month=t.value;S.analytics=null;S.analyticsError='';paint();loadAnalytics(S.month).then(()=>paint()).catch(ex=>{S.analyticsError=ex.message;paint();});}});
 root.addEventListener('submit',e=>{e.preventDefault();let f=e.target,d=new FormData(f);if(f.id==='checkout-name-form'){submitNamedOrder(d);return;}(async()=>{S.busy=true;
 if(f.id==='login'){S.loginEmail=String(d.get('email')||'').trim();let r=await api.auth.signInWithPassword({email:S.loginEmail,password:String(d.get('password'))});if(r.error)throw Error(r.error.message?.includes('Invalid login credentials')?'Email ou palavra-passe incorretos. Verifique a conta ou redefina a palavra-passe no Supabase.':r.error.message);await auth();if(!S.role)throw Error('Conta sem autorização de equipa');S.loginEmail='';await loadOrders();}
 if(f.id==='productForm'){let price=String(d.get('price')).trim(),stock=String(d.get('stock')).trim(),data={name:String(d.get('name')).trim(),category:String(d.get('category')),icon:String(d.get('icon')).trim()||'🍽️',price_cents:price===''?null:Math.round(Number(price)*100),stock_qty:stock===''?null:Number(stock),sort_order:Number(d.get('sort'))||0,active:d.get('active')==='true'};if((data.price_cents!==null&&data.price_cents<1)||(data.stock_qty!==null&&(!Number.isInteger(data.stock_qty)||data.stock_qty<0)))throw Error('Preço ou estoque inválido');let id=String(d.get('id')),r=await (id?api.from('products').update(data).eq('id',id):api.from('products').insert(data));if(r.error)throw r.error;S.editProduct=null;await loadCatalog();}
