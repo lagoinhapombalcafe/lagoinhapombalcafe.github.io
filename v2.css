@@ -183,3 +183,42 @@ button.ghost:hover:not(:disabled){background:#484037}
 .order.test-order{border:2px solid #bf8b47;background:linear-gradient(140deg,#34291f,#211f1d)}
 .test-tag{display:inline-block;vertical-align:middle;background:#e7bc80;color:#19150f;padding:3px 8px;border-radius:6px;font:800 11px/1.3 'Segoe UI',sans-serif;letter-spacing:.7px}
 .ticket .test-note{margin:19px 0;color:#f9dfaf;background:#4f3922;border:1px solid #ac824a;border-radius:12px;padding:12px 15px;font-size:14px;font-weight:800}
+
+
+/* Nome do cliente no checkout e no circuito de atendimento (v3.3) */
+.checkout-overlay{position:fixed;inset:0;z-index:110;background:#050505cf;backdrop-filter:blur(9px);display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
+.checkout-dialog{position:relative;width:min(100%,455px);margin:auto;background:linear-gradient(165deg,#2b241f,#171719 80%);color:#fff;padding:31px 29px 28px;border:1px solid #97764e;border-radius:23px;box-shadow:0 25px 95px #000c}
+.checkout-dialog .modal-close{position:absolute;right:18px;top:14px;background:#3f332b;color:#f7dcaf;width:34px;height:34px;border-radius:50%;padding:0;font-size:23px;line-height:1}
+.checkout-dialog .checkout-dialog-icon{font-size:46px;margin:10px 0 4px}
+.checkout-dialog h2{font-size:clamp(25px,6vw,33px);letter-spacing:-.7px;line-height:1.12;max-width:350px;margin:10px 0 12px}
+.checkout-dialog p{color:#cabeaf;font-size:13px;line-height:1.6;margin-bottom:25px}
+.checkout-dialog form{display:grid;gap:10px}
+.checkout-dialog label{font-size:12px;font-weight:800;color:#f2d5aa}
+.checkout-dialog input{width:100%;background:#131313;border:1px solid #75634e;border-radius:12px;color:#fff;font-size:19px;font-weight:700;padding:14px 16px;outline-offset:3px}
+.checkout-dialog input::placeholder{color:#8d837a;font-weight:400}
+.checkout-dialog .name-order-total{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid #514130;padding-top:16px;margin-top:12px;color:#bdb1a5;font-size:13px}
+.checkout-dialog .name-order-total strong{color:#f2d1a0;font-size:22px}
+.checkout-dialog .checkout-btn{width:100%;margin-top:10px;padding:16px 18px}
+.checkout-dialog>small{display:block;margin-top:16px;text-align:center;color:#ae9f8c;font-size:11px}
+.checkout-dialog .alert{font-size:12px;margin:10px 0;color:#ffded5;background:#583528}
+.ticket .ticket-name-icon{display:block;font-size:43px;margin:10px 0}
+.ticket h1.customer-ticket-name{font-family:Georgia,'Times New Roman',serif;font-size:clamp(36px,7vw,64px);line-height:1.1;overflow-wrap:anywhere;color:#f3d7af;margin:10px 0 5px}
+.ticket .ticket-internal-ref{font-size:12px;letter-spacing:1px;color:#a99a89;font-weight:700;margin-bottom:22px}
+.ticket .ticket-items{border-top:1px solid #53412f;border-bottom:1px solid #53412f;margin:24px 0;padding:16px 0}
+.ticket .ticket-items p{font-size:15px;color:#dfd2c0;margin:5px 0}
+.ticket h3.ticket-total{color:#f4d5a9;font-size:29px}
+.order-head .order-customer{display:flex;flex-direction:column;gap:2px;min-width:0}
+.order-head .order-name{font-weight:900;font-size:clamp(20px,2.4vw,26px);color:#f2d3a3;overflow-wrap:anywhere;line-height:1.15}
+.order-head .order-customer>small{font-weight:700;color:#ac9d8e;font-size:11px}
+.order-head .order-status{flex-shrink:0;max-width:47%;text-align:right;font-size:11px}
+.order .order-head{align-items:start;gap:10px}
+.pickup section b.pickup-name{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:200px;max-width:380px;overflow-wrap:anywhere;font-family:Georgia,'Times New Roman',serif;font-size:clamp(26px,4vw,49px);padding:22px 30px;border-color:#ae885a;background:#342c24;color:#f6dab4}
+.pickup section b.pickup-name .pickup-ref{display:block;font-family:'Segoe UI',Arial,sans-serif;font-size:11px;font-weight:800;letter-spacing:1.5px;margin-top:12px;color:#a99d8d}
+@media(max-width:540px){
+ .checkout-dialog{padding:26px 20px 24px;border-radius:19px}
+ .checkout-dialog h2{font-size:29px}
+ .order-head .order-name{font-size:22px}
+ .order-head .order-status{max-width:43%}
+ .pickup section b.pickup-name{width:100%;min-width:0;max-width:100%}
+}
+@media print{.checkout-overlay{display:none!important}}
