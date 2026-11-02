@@ -222,3 +222,5 @@ button.ghost:hover:not(:disabled){background:#484037}
  .pickup section b.pickup-name{width:100%;min-width:0;max-width:100%}
 }
 @media print{.checkout-overlay{display:none!important}}
+
+.checkout-dialog .checkout-name-error{color:#ffe5da;background:#58352c;border:1px solid #98624e;border-radius:10px;margin:4px 0 10px;padding:10px 12px;font-weight:700;font-size:13px;line-height:1.4}
