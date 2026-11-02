@@ -168,16 +168,15 @@ function queue(who){
  const pending=day.filter(o=>o.payment_status==='pending'&&o.status==='awaiting_payment');
  const paid=day.filter(o=>o.payment_status==='paid');
  const preparing=day.filter(o=>o.payment_status==='paid'&&['queued','preparing'].includes(o.status));
- const ready=day.filter(o=>o.status==='ready');
  const isCash=who==='caixa';
  const cards=isCash
   ? pending.map(o=>orderCard(o,o.number>=9000?[['paid','Simular pagamento']]:[['paid','Confirmar pagamento'],['cancel','Cancelar']]))
-  : preparing.map(o=>orderCard(o,o.status==='queued'?[['preparing','Iniciar preparo'],['ready','Pronto']]:[['ready','Marcar pronto']]));
+  : preparing.map(o=>orderCard(o,o.status==='queued'?[['preparing','Iniciar preparo'],['ready','Pronto']]:[['ready','Finalizar · Pronto']]));
  return header(isCash?'Caixa':'Cozinha',
-   isCash?'Confirme os pagamentos. A cozinha assume a preparação e a entrega.':'Prepare, marque como pronto e entregue diretamente ao cliente.')+
+   isCash?'Confirme os pagamentos. Depois, a cozinha assume o pedido.':'Ao marcar Pronto, o pedido é finalizado na cozinha e o cliente já pode levantar.')+
    `<div class="metrics"><div>Aguardam pagamento<b>${pending.length}</b></div><div>Pedidos pagos<b>${paid.length}</b></div><div>Total recebido<b>${EUR(paid.filter(o=>o.number<9000).reduce((x,o)=>x+o.total_cents,0))}</b></div></div>`+
-   `<div class="panel"><div class="panel-head"><h2>${isCash?'Aguardam pagamento':'Em preparação'}</h2><button class="small ghost" data-do="refresh">Atualizar ↻</button></div><div class="orders">${cards.join('')||'<p class="muted">Nenhum pedido nesta fila.</p>'}</div></div>`+
-   (!isCash?`<div class="panel ready-panel"><div class="panel-head"><h2>Prontos para entregar</h2><span class="label">${ready.length} prontos</span></div><p class="muted">O cliente vê o aviso assim que marcar Pronto. Entregue aqui, sem voltar ao Caixa.</p><div class="orders">${ready.map(o=>orderCard(o,[['delivered','Entregue ao cliente']])).join('')||'<p class="muted">Nenhum pedido pronto para levantar.</p>'}</div></div>`:'')+
+   `<div class="panel"><div class="panel-head"><h2>${isCash?'Aguardam pagamento':'Pedidos em preparação'}</h2><button class="small ghost" data-do="refresh">Atualizar ↻</button></div><div class="orders">${cards.join('')||'<p class="muted">Nenhum pedido nesta fila.</p>'}</div></div>`+
+   (!isCash?'<p class="muted">Depois de marcar Pronto, o pedido sai desta fila e aparece no ecrã de retirada. Não há mais nenhuma ação para a equipa.</p>':'')+
    `<p><a href="#/retirada">Abrir ecrã de clientes prontos ↗</a></p>`;
 }
 function admin(){let opts=[['visao','Resumo'],['produtos','Produtos'],['combos','Combos'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():qr()}`;}
