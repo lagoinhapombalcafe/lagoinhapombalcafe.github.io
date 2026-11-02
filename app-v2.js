@@ -293,6 +293,8 @@ function updateProductIconSelection(){
 }
 function productsPanel(){
  const listing=S.products.filter(x=>x.price_cents!==null);
+ const foodListing=listing.filter(x=>x.category==='food');
+ const drinkListing=listing.filter(x=>x.category==='drink');
  const comboChoice=S.products.filter(x=>x.combo_eligible);
  const unavailable=S.products.filter(x=>x.price_cents===null&&!x.combo_eligible);
  const p=product(S.editProduct);
@@ -306,11 +308,13 @@ function productsPanel(){
  </div>
  <div class="main-grid"><section class="panel product-manager-list">
   <div class="panel-head"><h2>Lista de produtos</h2><button class="small" type="button" data-do="edit-product" data-id="">+ Novo individual</button></div>
-  <div class="product-section-heading"><h3>Disponíveis avulso</h3><span>${listing.length}</span></div>
-  ${listing.length?listing.map(row).join(''):'<p class="muted">Ainda não existem produtos individuais.</p>'}
-  <div class="product-section-heading"><h3>Opções dos combos</h3><span>${comboChoice.length}</span></div>
-  <p class="muted">Apenas os produtos autorizados como escolha do combo. Eles também podem ser vendidos avulso.</p>
-  ${comboChoice.length?comboChoice.map(row).join(''):'<p class="muted">Nenhuma opção cadastrada para os combos.</p>'}
+  <div class="product-section-heading"><h3>Alimentos, doces e refeições</h3><span>${foodListing.length}</span></div>
+  ${foodListing.length?foodListing.map(row).join(''):'<p class="muted">Ainda não há alimentos individuais.</p>'}
+  <div class="product-section-heading"><h3>Bebidas avulsas</h3><span>${drinkListing.length}</span></div>
+  ${drinkListing.length?drinkListing.map(row).join(''):'<p class="muted">Ainda não há bebidas individuais.</p>'}
+  <div class="product-section-heading"><h3>Itens permitidos nos combos</h3><span>${comboChoice.length}</span></div>
+  <p class="muted">São os mesmos produtos acima, mas autorizados também para compor combos. Cada produto aparece uma única vez na lista principal.</p>
+  <div class="combo-eligible-summary">${comboChoice.length?comboChoice.map(x=>`<span class="combo-eligible-pill">${productIconMarkup(x.icon)} ${E(x.name)}</span>`).join(''):'<span class="muted">Nenhum item autorizado para combos.</span>'}</div>
   ${unavailable.length?`<div class="product-section-heading"><h3>Sem venda avulsa nem participação em combos</h3><span>${unavailable.length}</span></div>${unavailable.map(row).join('')}`:''}
  </section>
  <section class="panel product-manager-editor">
