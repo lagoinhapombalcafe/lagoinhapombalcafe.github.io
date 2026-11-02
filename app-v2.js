@@ -67,6 +67,7 @@ function checkoutModal(){
      <h2 id="checkout-name-title">Como podemos chamar você?</h2>
      <p>Informe seu primeiro nome ou um nome pelo qual prefere ser chamado. Será usado no Caixa e na Cozinha.</p>
      <form id="checkout-name-form">
+       ${S.notice?'<p class="checkout-name-error" role="alert">'+E(S.notice)+'</p>':''}
        <label for="customer-name">Seu nome</label>
        <input id="customer-name" name="customer_name" type="text" autocomplete="given-name" autocapitalize="words" maxlength="60" minlength="2" placeholder="Ex.: Rafael" required value="${E(S.customerName)}">
        <div class="name-order-total"><span>${count} ${count===1?'item':'itens'} no pedido</span><strong>${EUR(total)}</strong></div>
