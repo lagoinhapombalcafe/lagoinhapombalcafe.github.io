@@ -27,8 +27,8 @@ else body=menu();
 root.innerHTML=shell(body);}
 async function loadCatalog(){let [p,c,x]=await Promise.all([api.from('products').select('*').order('sort_order'),api.from('cafe_combos').select('*').order('sort_order'),api.from('cafe_settings').select('*').eq('id',1).single()]);for(let v of [p,c,x])if(v.error)throw v.error;
 S.products=p.data;S.combos=c.data;S.settings=x.data;
-if(!valid(product(S.food)))S.food=S.products.find(p=>p.category==='food'&&valid(p))?.id||'';
-if(!valid(product(S.drink)))S.drink=S.products.find(p=>p.category==='drink'&&valid(p))?.id||'';
+if(!valid(product(S.food))||!product(S.food)?.combo_eligible)S.food=S.products.find(p=>p.category==='food'&&p.combo_eligible&&valid(p))?.id||'';
+if(!valid(product(S.drink))||!product(S.drink)?.combo_eligible)S.drink=S.products.find(p=>p.category==='drink'&&p.combo_eligible&&valid(p))?.id||'';
 if(!valid(combo(S.combo)))S.combo=S.combos.find(valid)?.id||'';}
 async function auth(){const {data:{user}}=await api.auth.getUser();S.user=user;S.role=null;if(user){let {data,error}=await api.from('staff_roles').select('role').eq('user_id',user.id).maybeSingle();if(error)throw error;S.role=data?.role||null;}}
 function loadAnalytics(month){
@@ -51,7 +51,7 @@ function cartAvailable(){
       tally.set('p:'+row.id,(tally.get('p:'+row.id)||0)+row.qty);
     }else{
       const c=combo(row.id),f=product(row.food_id),d=product(row.drink_id);
-      if(!valid(c)||!valid(f)||!valid(d))return false;
+      if(!valid(c)||!valid(f)||!valid(d)||!f.combo_eligible||!d.combo_eligible)return false;
       tally.set('c:'+row.id,(tally.get('c:'+row.id)||0)+row.qty);
       tally.set('p:'+row.food_id,(tally.get('p:'+row.food_id)||0)+row.qty);
       tally.set('p:'+row.drink_id,(tally.get('p:'+row.drink_id)||0)+row.qty);
@@ -85,8 +85,8 @@ function checkoutModal(){
  </div>`;
 }
 function menu(){
-  const foods=S.products.filter(p=>p.category==='food'&&valid(p));
-  const drinks=S.products.filter(p=>p.category==='drink'&&valid(p));
+  const foods=S.products.filter(p=>p.category==='food'&&p.combo_eligible&&valid(p));
+  const drinks=S.products.filter(p=>p.category==='drink'&&p.combo_eligible&&valid(p));
   const combos=S.combos.filter(valid);
   const singles=S.products.filter(p=>valid(p)&&p.price_cents!==null);
   const chosen=combo(S.combo)&&valid(combo(S.combo))?combo(S.combo):combos[0];
@@ -249,7 +249,7 @@ function analyticsPanel(){
    <div class="analytics-foot"><small>Os pedidos de teste não entram nos gráficos. Os valores representam pagamentos confirmados, antes de descontar despesas.</small><button class="small ghost" data-do="refresh-stats">Atualizar gráficos ↻</button></div>
  </section>`;
 }
-function admin(){let opts=[['visao','Resumo'],['estatisticas','Gráficos'],['produtos','Produtos'],['combos','Combos'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='estatisticas'?analyticsPanel():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():qr()}`;}
+function admin(){let opts=[['visao','Resumo'],['estatisticas','Gráficos'],['produtos','Individuais'],['combos','Combos'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='estatisticas'?analyticsPanel():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():qr()}`;}
 function overview(){
  const paid=S.orders.filter(o=>o.order_day===DAY()&&o.payment_status==='paid'&&o.number<9000);
  const ex=S.expenses.filter(x=>x.expense_date===DAY());
@@ -291,8 +291,50 @@ function updateProductIconSelection(){
   button.setAttribute('aria-pressed',String(chosen));
  }
 }
-function productsPanel(){let p=product(S.editProduct);return `<div class="main-grid"><section class="panel"><div class="panel-head"><h2>Produtos e estoque</h2><button class="small" data-do="edit-product" data-id="">+ Novo</button></div>${S.products.map(x=>`<div class="item"><span class="emoji">${productIconMarkup(x.icon)}</span><div><b>${E(x.name)}</b><small>${x.category==='food'?'Alimento':'Bebida'} · ${x.price_cents===null?'Preço não definido':EUR(x.price_cents)} · Estoque: ${x.stock_qty??'ilimitado'}</small></div><button class="small ghost" data-do="edit-product" data-id="${x.id}">Editar</button></div>`).join('')}</section><section class="panel"><h2>${p?'Editar produto':'Novo produto'}</h2><form id="productForm" class="form-grid"><input type="hidden" name="product_uuid" value="${E(p?.id||'')}"><label>Nome<input name="name" required maxlength="60" value="${E(p?.name||'')}"></label><label>Tipo<select name="category"><option value="food" ${p?.category==='food'?'selected':''}>Alimento</option><option value="drink" ${p?.category==='drink'?'selected':''}>Bebida</option></select></label><label>Ícone<div class="product-icon-entry"><span class="product-icon-preview" id="product-icon-preview">${productIconMarkup(p?.icon||'🍽️')}</span><input id="product-icon-input" name="icon" maxlength="32" autocomplete="off" placeholder="Escolha abaixo ou digite emoji" value="${E(p?.icon||'🍽️')}"></div></label>${productIconPicker(p?.icon||'🍽️')}<label>Preço avulso em € (vazio = não vender avulso)<input type="text" inputmode="decimal" name="price" autocomplete="off" placeholder="Ex.: 1,50" value="${p?.price_cents==null?'':(p.price_cents/100).toFixed(2).replace('.',',')}"></label><label>Estoque (vazio = ilimitado)<input type="number" min="0" step="1" name="stock" value="${p?.stock_qty??''}"></label><label>Ordem<input type="number" name="sort" value="${p?.sort_order??10}"></label><label>Estado<select name="active"><option value="true" ${p?.active!==false?'selected':''}>Ativo</option><option value="false" ${p?.active===false?'selected':''}>Oculto</option></select></label><button type="button" data-do="save-product" class="save-product-btn">Guardar produto</button><p id="product-save-status" class="product-save-status" aria-live="polite"></p></form></section></div>`;}
-function combosPanel(){let c=combo(S.editCombo);return `<div class="main-grid"><section class="panel"><div class="panel-head"><h2>Combos cadastrados</h2><button class="small" data-do="edit-combo" data-id="">+ Novo</button></div>${S.combos.map(x=>`<div class="item"><span class="emoji">🥐</span><div><b>${E(x.name)}</b><small>${EUR(x.price_cents)} · ${x.active?'Ativo':'Oculto'} · Estoque: ${x.stock_qty??'ilimitado'}</small></div><button class="small ghost" data-do="edit-combo" data-id="${x.id}">Editar</button></div>`).join('')}</section><section class="panel"><h2>${c?'Editar combo':'Novo combo'}</h2><p class="muted">O combo permite escolher um alimento e uma bebida disponíveis.</p><form id="comboForm" class="form-grid"><input type="hidden" name="id" value="${E(c?.id||'')}"><label>Nome<input name="name" required maxlength="90" value="${E(c?.name||'')}"></label><label>Descrição<input name="description" maxlength="160" value="${E(c?.description||'Escolha 1 alimento e 1 bebida')}"></label><label>Preço em €<input type="number" step="0.01" min="0.01" name="price" required value="${c?(c.price_cents/100).toFixed(2):''}"></label><label>Estoque (vazio = ilimitado)<input type="number" min="0" name="stock" value="${c?.stock_qty??''}"></label><label>Ordem<input type="number" name="sort" value="${c?.sort_order??10}"></label><label>Estado<select name="active"><option value="true" ${c?.active!==false?'selected':''}>Ativo</option><option value="false" ${c?.active===false?'selected':''}>Oculto</option></select></label><button>Guardar combo</button></form></section></div>`;}
+function productsPanel(){
+ const listing=S.products.filter(x=>x.price_cents!==null);
+ const comboChoice=S.products.filter(x=>x.combo_eligible);
+ const unavailable=S.products.filter(x=>x.price_cents===null&&!x.combo_eligible);
+ const p=product(S.editProduct);
+ const row=(x)=>`<div class="item product-manager-row"><span class="emoji">${productIconMarkup(x.icon)}</span>
+  <div><b>${E(x.name)}</b><small>${x.category==='food'?'Alimento':'Bebida'} · ${x.price_cents===null?'Sem preço avulso':EUR(x.price_cents)} · Estoque: ${x.stock_qty??'ilimitado'}</small>
+  <div class="product-manager-tags">${x.price_cents!==null?'<span class="product-tag">Avulso</span>':''}${x.combo_eligible?'<span class="product-tag combo-tag">Também no combo</span>':''}${!x.active?'<span class="product-tag inactive-tag">Oculto</span>':''}</div></div>
+  <button type="button" class="small ghost" data-do="edit-product" data-id="${x.id}">Editar</button></div>`;
+ return `<div class="catalog-admin-intro">
+   <div><span class="section-eyebrow">ORGANIZAÇÃO DO CARDÁPIO</span><h2>Produtos individuais</h2><p>Cadastre salgados, bolos, marmitex e bebidas aqui. Nenhum produto novo entra em combos automaticamente.</p></div>
+   <div class="catalog-admin-counter"><strong>${S.products.length}</strong><span>produtos cadastrados</span></div>
+ </div>
+ <div class="main-grid"><section class="panel product-manager-list">
+  <div class="panel-head"><h2>Lista de produtos</h2><button class="small" type="button" data-do="edit-product" data-id="">+ Novo individual</button></div>
+  <div class="product-section-heading"><h3>Disponíveis avulso</h3><span>${listing.length}</span></div>
+  ${listing.length?listing.map(row).join(''):'<p class="muted">Ainda não existem produtos individuais.</p>'}
+  <div class="product-section-heading"><h3>Opções dos combos</h3><span>${comboChoice.length}</span></div>
+  <p class="muted">Apenas os produtos autorizados como escolha do combo. Eles também podem ser vendidos avulso.</p>
+  ${comboChoice.length?comboChoice.map(row).join(''):'<p class="muted">Nenhuma opção cadastrada para os combos.</p>'}
+  ${unavailable.length?`<div class="product-section-heading"><h3>Sem venda avulsa nem participação em combos</h3><span>${unavailable.length}</span></div>${unavailable.map(row).join('')}`:''}
+ </section>
+ <section class="panel product-manager-editor">
+  <h2>${p?'Editar produto individual':'Novo produto individual'}</h2>
+  <p class="muted">Adicione o nome, tipo, ícone, preço e estoque. O produto aparecerá na seção de individuais.</p>
+  <form id="productForm" class="form-grid">
+   <input type="hidden" name="product_uuid" value="${E(p?.id||'')}">
+   <label>Nome<input name="name" required maxlength="60" value="${E(p?.name||'')}"></label>
+   <label>Tipo<select name="category"><option value="food" ${p?.category==='food'?'selected':''}>Alimento</option><option value="drink" ${p?.category==='drink'?'selected':''}>Bebida</option></select></label>
+   <label>Ícone<div class="product-icon-entry"><span class="product-icon-preview" id="product-icon-preview">${productIconMarkup(p?.icon||'🍽️')}</span><input id="product-icon-input" name="icon" maxlength="32" autocomplete="off" placeholder="Escolha abaixo ou digite emoji" value="${E(p?.icon||'🍽️')}"></div></label>
+   ${productIconPicker(p?.icon||'🍽️')}
+   <label>Preço avulso em € (vazio = não vender avulso)<input type="text" inputmode="decimal" name="price" autocomplete="off" placeholder="Ex.: 1,50" value="${p?.price_cents==null?'':(p.price_cents/100).toFixed(2).replace('.',',')}"></label>
+   <label>Estoque (vazio = ilimitado)<input type="number" min="0" step="1" name="stock" value="${p?.stock_qty??''}"></label>
+   <div class="product-combo-permission">
+    <label class="product-checkbox-row"><input type="checkbox" name="combo_eligible" ${p?.combo_eligible?'checked':''}><span><strong>Permitir também como opção de combo</strong><small>Por padrão vem desmarcado. Ative apenas para os alimentos ou bebidas que podem compor os combos.</small></span></label>
+   </div>
+   <label>Ordem<input type="number" name="sort" value="${p?.sort_order??10}"></label>
+   <label>Estado<select name="active"><option value="true" ${p?.active!==false?'selected':''}>Ativo</option><option value="false" ${p?.active===false?'selected':''}>Oculto</option></select></label>
+   <button type="button" data-do="save-product" class="save-product-btn">Guardar produto</button>
+   <p id="product-save-status" class="product-save-status" aria-live="polite"></p>
+  </form>
+ </section></div>`;
+}
+function combosPanel(){let c=combo(S.editCombo);return `<div class="catalog-admin-intro"><div><span class="section-eyebrow">VENDA EM CONJUNTO</span><h2>Cadastro de combos</h2><p>Combos são conjuntos com preço próprio, separados dos produtos individuais.</p></div><div class="catalog-admin-counter"><strong>${S.combos.length}</strong><span>combos cadastrados</span></div></div><div class="main-grid"><section class="panel"><div class="panel-head"><h2>Combos cadastrados</h2><button class="small" data-do="edit-combo" data-id="">+ Novo</button></div>${S.combos.map(x=>`<div class="item"><span class="emoji">🥐</span><div><b>${E(x.name)}</b><small>${EUR(x.price_cents)} · ${x.active?'Ativo':'Oculto'} · Estoque: ${x.stock_qty??'ilimitado'}</small></div><button class="small ghost" data-do="edit-combo" data-id="${x.id}">Editar</button></div>`).join('')}</section><section class="panel"><h2>${c?'Editar combo':'Novo combo'}</h2><p class="muted">Os combos são separados dos individuais. Apenas alimentos e bebidas marcados como 'Permitir também como opção de combo' podem ser escolhidos. Defina essa permissão em Individuais.</p><form id="comboForm" class="form-grid"><input type="hidden" name="id" value="${E(c?.id||'')}"><label>Nome<input name="name" required maxlength="90" value="${E(c?.name||'')}"></label><label>Descrição<input name="description" maxlength="160" value="${E(c?.description||'Escolha 1 alimento e 1 bebida')}"></label><label>Preço em €<input type="number" step="0.01" min="0.01" name="price" required value="${c?(c.price_cents/100).toFixed(2):''}"></label><label>Estoque (vazio = ilimitado)<input type="number" min="0" name="stock" value="${c?.stock_qty??''}"></label><label>Ordem<input type="number" name="sort" value="${c?.sort_order??10}"></label><label>Estado<select name="active"><option value="true" ${c?.active!==false?'selected':''}>Ativo</option><option value="false" ${c?.active===false?'selected':''}>Oculto</option></select></label><button>Guardar combo</button></form></section></div>`;}
 function financePanel(){const month=S.month||DAY().slice(0,7),paid=S.orders.filter(x=>x.order_day.startsWith(month)&&x.payment_status==='paid'&&x.number<9000),ex=S.expenses.filter(x=>x.expense_date.startsWith(month)),a=S.analytics?.month===month?Number(S.analytics.total_cents):paid.reduce((n,x)=>n+x.total_cents,0),paidCount=S.analytics?.month===month?Number(S.analytics.paid_orders):paid.length,b=ex.reduce((n,x)=>n+x.amount_cents,0);return `<div class="panel"><div class="panel-head"><h2>Financeiro</h2><label>Mês <input id="month" type="month" value="${month}"></label></div><div class="metrics"><div>Receita confirmada<b>${EUR(a)}</b></div><div>Despesas<b>${EUR(b)}</b></div><div>Saldo<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paidCount}</b></div></div><p><button class="small ghost" data-do="csv">Exportar CSV</button></p><h3>Registar despesa</h3><form id="expenseForm" class="expense-row"><label>Data<input type="date" name="date" required value="${DAY()}"></label><label>Descrição<input name="description" required maxlength="180"></label><label>Categoria<select name="category"><option>Ingredientes</option><option>Embalagens</option><option>Equipamentos</option><option>Outros</option></select></label><label>Valor (€)<input type="number" name="amount" required min="0.01" step="0.01"></label><button>Adicionar</button></form>${ex.map(x=>`<div class="item"><div><b>${E(x.description)}</b><small>${E(x.expense_date)} · ${E(x.category)}</small></div><strong>${EUR(x.amount_cents)}</strong><button class="small ghost" data-do="delete-expense" data-id="${x.id}">Excluir</button></div>`).join('')||'<p class="muted">Sem despesas neste mês.</p>'}<p class="muted">Saldo é receita recebida menos despesas registadas. Não inclui impostos nem custos não lançados.</p></div>`;}
 function qr(){let url=location.origin+location.pathname+'#/cliente',img='https://api.qrserver.com/v1/create-qr-code/?size=450x450&data='+encodeURIComponent(url);return `<div class="panel qr"><img src="${img}" alt="QR Code do Lagoinha Café"><div><h2>Faça o pedido pelo telemóvel</h2><p>Sem cadastro. Escolha seus produtos, informe seu nome e pague no caixa.</p><small>${E(url)}</small><p><button data-do="print">Imprimir QR Code</button></p></div></div>`;}
 function add(x){
@@ -349,6 +391,7 @@ async function saveProductForm(){
      icon:String(form.get('icon')||'').trim()||'🍽️',
      price_cents:parseProductEuros(form.get('price')),
      stock_qty:String(form.get('stock')||'').trim()===''?null:Number(form.get('stock')),
+     combo_eligible:form.get('combo_eligible')==='on',
      sort_order:Number(form.get('sort'))||0,
      active:String(form.get('active'))==='true'
    };
@@ -398,7 +441,7 @@ if(k==='combo-less'||k==='combo-more'){S.qty=Math.max(1,Math.min(20,S.qty+(k==='
 
 if(k==='combo'){S.combo=id;paint();return;}
 if(k==='add-unit'){let p=product(id);if(!valid(p)||p.price_cents==null)throw Error('Produto indisponível');add({kind:'unit',id:p.id,name:p.name,price:p.price_cents,qty:1});return;}
-if(k==='add-combo'){let c=combo(S.combo),f=product(S.food),d=product(S.drink),n=Number(S.qty);if(!valid(c)||!valid(f)||!valid(d)||!Number.isInteger(n)||n<1||n>20)throw Error('Seleção inválida');add({kind:'combo',id:c.id,food_id:f.id,drink_id:d.id,name:c.name,detail:f.name+' + '+d.name,qty:n,price:c.price_cents});return;}
+if(k==='add-combo'){let c=combo(S.combo),f=product(S.food),d=product(S.drink),n=Number(S.qty);if(!valid(c)||!valid(f)||!valid(d)||!f.combo_eligible||!d.combo_eligible||!Number.isInteger(n)||n<1||n>20)throw Error('Seleção inválida');add({kind:'combo',id:c.id,food_id:f.id,drink_id:d.id,name:c.name,detail:f.name+' + '+d.name,qty:n,price:c.price_cents});return;}
 if(k==='plus'||k==='minus'){let i=Number(b.dataset.i),x=S.cart[i];if(!x)return;let count=S.cart.reduce((n,x)=>n+x.qty,0);if(k==='plus'&&count>=20)throw Error('Limite de 20 artigos');x.qty+=k==='plus'?1:-1;if(x.qty<1)S.cart.splice(i,1);if(!cartAvailable()){x.qty-=k==='plus'?1:-1;throw Error('Quantidade indisponível deste artigo.');}paint();return;}
 if(k==='send'){
  if(!S.settings.orders_open)throw Error('Encomendas fechadas');
