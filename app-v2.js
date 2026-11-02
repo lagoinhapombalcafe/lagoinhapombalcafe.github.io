@@ -1,6 +1,6 @@
 import {CONFIG} from './config.js';
 const $=s=>document.querySelector(s), root=$('#app');
-const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',editProduct:null,editCombo:null,month:'',busy:false,notice:''};
+const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',editProduct:null,editCombo:null,month:'',busy:false,notice:'',checkoutOpen:false,customerName:''};
 let api;
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const EUR=n=>(Number(n||0)/100).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
@@ -31,9 +31,9 @@ if(!valid(product(S.food)))S.food=S.products.find(p=>p.category==='food'&&valid(
 if(!valid(product(S.drink)))S.drink=S.products.find(p=>p.category==='drink'&&valid(p))?.id||'';
 if(!valid(combo(S.combo)))S.combo=S.combos.find(valid)?.id||'';}
 async function auth(){const {data:{user}}=await api.auth.getUser();S.user=user;S.role=null;if(user){let {data,error}=await api.from('staff_roles').select('role').eq('user_id',user.id).maybeSingle();if(error)throw error;S.role=data?.role||null;}}
-async function loadOrders(){if(!S.role)return;const r=await api.from('orders').select('id,number,order_day,created_at,paid_at,total_cents,status,payment_status,cafe_order_lines(item_name,detail,quantity)').order('created_at',{ascending:false}).limit(500);if(r.error)throw r.error;S.orders=r.data||[];if(S.role==='admin'){let ex=await api.from('cafe_expenses').select('*').order('expense_date',{ascending:false}).limit(500);if(ex.error)throw ex.error;S.expenses=ex.data||[];}}
+async function loadOrders(){if(!S.role)return;const r=await api.from('orders').select('id,number,customer_name,order_day,created_at,paid_at,total_cents,status,payment_status,cafe_order_lines(item_name,detail,quantity)').order('created_at',{ascending:false}).limit(500);if(r.error)throw r.error;S.orders=r.data||[];if(S.role==='admin'){let ex=await api.from('cafe_expenses').select('*').order('expense_date',{ascending:false}).limit(500);if(ex.error)throw ex.error;S.expenses=ex.data||[];}}
 async function loadTicket(){let token=location.hash.split('/')[2];if(!/^[\da-f-]{36}$/i.test(token||'')){S.ticket=null;return;}let r=await api.rpc('get_cafe_ticket_v2',{p_token:token});if(r.error)throw r.error;S.ticket=r.data;}
-async function loadReady(){let r=await api.rpc('get_ready_tickets');if(r.error)throw r.error;S.ready=(r.data||[]).map(x=>x.number);}
+async function loadReady(){let r=await api.rpc('get_cafe_ready_names_v1');if(r.error)throw r.error;S.ready=r.data||[];}
 async function work(job){if(S.busy)return;S.busy=true;try{await job();S.notice='';}catch(e){S.notice='Erro: '+(e.message||e);}finally{S.busy=false;paint();}}
 function cartAvailable(){
   const tally=new Map();
@@ -55,6 +55,26 @@ function cartAvailable(){
     if(!p||p.stock_qty!==null&&num>p.stock_qty)return false;
   }
   return true;
+}
+function checkoutModal(){
+ const count=S.cart.reduce((n,row)=>n+row.qty,0);
+ const total=S.cart.reduce((n,row)=>n+row.qty*row.price,0);
+ return `<div class="checkout-overlay">
+   <section class="checkout-dialog" role="dialog" aria-modal="true" aria-labelledby="checkout-name-title">
+     <button type="button" class="modal-close" data-do="close-checkout" aria-label="Fechar">×</button>
+     <span class="section-eyebrow">ÚLTIMO PASSO</span>
+     <div class="checkout-dialog-icon">☕</div>
+     <h2 id="checkout-name-title">Como podemos chamar você?</h2>
+     <p>Informe seu primeiro nome ou um nome pelo qual prefere ser chamado. Será usado no Caixa e na Cozinha.</p>
+     <form id="checkout-name-form">
+       <label for="customer-name">Seu nome</label>
+       <input id="customer-name" name="customer_name" type="text" autocomplete="given-name" autocapitalize="words" maxlength="60" minlength="2" placeholder="Ex.: Rafael" required value="${E(S.customerName)}">
+       <div class="name-order-total"><span>${count} ${count===1?'item':'itens'} no pedido</span><strong>${EUR(total)}</strong></div>
+       <button type="submit" class="checkout-btn" ${S.busy?'disabled':''}>${S.busy?'Enviando…':'Confirmar meu pedido'} <span>→</span></button>
+     </form>
+     <small>Não precisa criar conta. O pagamento é feito no balcão.</small>
+   </section>
+ </div>`;
 }
 function menu(){
   const foods=S.products.filter(p=>p.category==='food'&&valid(p));
@@ -99,12 +119,49 @@ function menu(){
     ${!canCheckout&&S.cart.length?'<p class="stock-alert">Um dos itens do carrinho já não está disponível. Ajuste a quantidade ou retire-o.</p>':''}
     <div class="checkout"><div class="checkout-total"><span>Total do pedido</span><strong>${EUR(total)}</strong></div><button class="checkout-btn" type="button" data-do="send" ${!S.settings.orders_open||!S.cart.length||!canCheckout||S.busy?'disabled':''}>Confirmar pedido <span>→</span></button><small>Sem cadastro. Pague no balcão e acompanhe sua senha de retirada.</small></div>
   </section>
-  ${S.cart.length?`<div class="floating-cart"><div><small>${count} ${count===1?'item':'itens'} no pedido</small><strong>${EUR(total)}</strong></div><button type="button" data-do="go-cart">Ver pedido <span>↑</span></button></div>`:''}`;
+  ${S.cart.length?`<div class="floating-cart"><div><small>${count} ${count===1?'item':'itens'} no pedido</small><strong>${EUR(total)}</strong></div><button type="button" data-do="go-cart">Ver pedido <span>↑</span></button></div>`:''}${S.checkoutOpen?checkoutModal():''}`;
 }
-function ticket(){const t=S.ticket;if(!t)return '<div class="panel">Pedido não encontrado. <button data-do="refresh">Atualizar</button></div>';return `<div class="panel ticket"><span class="eyebrow">LAGOINHA CAFÉ · SENHA</span><h1>${String(t.number).padStart(3,'0')}</h1><strong class="status">${E(states[t.status]||t.status)}</strong><p>${(t.lines||[]).map(x=>`${x.quantity}× ${E(x.item_name)} ${E(x.detail||'')}`).join('<br>')}</p><h3>${EUR(t.total_cents)}</h3>${t.number>=9000?'<p class="test-note">🧪 PEDIDO DE TESTE — sem pagamento real.</p>':'<p class="muted">Apresenta esta senha no caixa para pagar. Só depois a cozinha recebe o pedido.</p>'}<button data-do="refresh">Atualizar estado</button></div>`;}
-function pickup(){return `<div class="pickup"><header>☕ LAGOINHA CAFÉ</header><h1>PEDIDOS PRONTOS</h1><section>${S.ready.length?S.ready.map(n=>`<b>${String(n).padStart(3,'0')}</b>`).join(''):'<p>Aguardando os próximos pedidos.</p>'}</section><p>Dirija-se ao balcão quando a sua senha aparecer.</p><a href="#/cliente">Voltar ao cardápio</a></div>`;}
+function ticket(){
+ const t=S.ticket;
+ if(!t)return '<div class="panel">Pedido não encontrado. <button data-do="refresh">Atualizar</button></div>';
+ const name=String(t.customer_name||'').trim();
+ return `<div class="panel ticket">
+   <span class="eyebrow">LAGOINHA CAFÉ · MEU PEDIDO</span>
+   <span class="ticket-name-icon">☕</span>
+   <h1 class="customer-ticket-name">${E(name||'Pedido recebido')}</h1>
+   <p class="ticket-internal-ref">Referência do pedido · #${String(t.number).padStart(3,'0')}</p>
+   <strong class="status">${E(states[t.status]||t.status)}</strong>
+   <div class="ticket-items">${(t.lines||[]).map(x=>`<p>${x.quantity}× ${E(x.item_name)} ${E(x.detail||'')}</p>`).join('')}</div>
+   <h3 class="ticket-total">${EUR(t.total_cents)}</h3>
+   ${t.number>=9000?'<p class="test-note">🧪 PEDIDO DE TESTE — sem pagamento real.</p>':
+      t.status==='awaiting_payment'?'<p class="muted">Dirija-se ao caixa, diga o seu nome e efetue o pagamento. A cozinha recebe o pedido depois da confirmação.</p>':
+      t.status==='ready'?'<p class="muted">O seu pedido está pronto! Pode levantá-lo no balcão.</p>':
+      '<p class="muted">Acompanhe aqui o estado do seu pedido.</p>'}
+   <button data-do="refresh">Atualizar estado</button>
+ </div>`;
+}
+function pickup(){
+ return `<div class="pickup"><header>☕ LAGOINHA CAFÉ</header>
+ <h1>PEDIDOS PRONTOS</h1>
+ <section>${S.ready.length?S.ready.map(x=>`<b class="pickup-name">${E(x.customer_name||'Cliente')}<small class="pickup-ref">REF. ${String(x.number).padStart(3,'0')}</small></b>`).join(''):'<p>Aguardando os próximos pedidos.</p>'}</section>
+ <p>Quando vir o seu nome, dirija-se ao balcão de retirada.</p>
+ <a href="#/cliente">Voltar ao cardápio</a></div>`;
+}
 function login(r){return header('Área da equipa','Acesso protegido para caixa, cozinha e administração.')+`<section class="panel login"><h2>${E({caixa:'Caixa',cozinha:'Cozinha',admin:'Administrador'}[r]||'Equipa')}</h2>${S.user?`<p>A conta ${E(S.user.email)} ainda não está autorizada nesta área.</p><button data-do="logout">Sair da conta</button>`:`<form id="login" class="form-grid"><label>Email<input type="email" name="email" required autocomplete="username"></label><label>Palavra-passe<input type="password" name="password" required autocomplete="current-password"></label><button>Entrar</button></form>`}<p class="muted">Apenas contas criadas e autorizadas no Supabase têm acesso à equipa.</p></section>`;}
-function orderCard(o,actions){return `<article class="order ${o.number>=9000?'test-order':''}"><div class="order-head"><strong>#${String(o.number).padStart(3,'0')} ${o.number>=9000?'<span class="test-tag">TESTE</span>':''}</strong><span>${E(states[o.status])} · ${getDate(o.created_at)}</span></div><p>${(o.cafe_order_lines||[]).map(l=>`<span>${l.quantity}× ${E(l.item_name)} ${E(l.detail||'')}</span>`).join('<br>')}</p><div class="align-row"><b>${EUR(o.total_cents)}</b><div>${actions.map(([a,label])=>`<button class="small" data-do="order" data-act="${a}" data-id="${o.id}">${label}</button>`).join(' ')}</div></div></article>`;}
+function orderCard(o,actions){
+ const name=String(o.customer_name||'').trim();
+ return `<article class="order ${o.number>=9000?'test-order':''}">
+  <div class="order-head">
+   <div class="order-customer">
+    <span class="order-name">${E(name||'Cliente sem nome')}</span>
+    <small>Ref. #${String(o.number).padStart(3,'0')} ${o.number>=9000?'<span class="test-tag">TESTE</span>':''}</small>
+   </div>
+   <span class="order-status">${E(states[o.status]||o.status)} · ${getDate(o.created_at)}</span>
+  </div>
+  <p>${(o.cafe_order_lines||[]).map(l=>`<span>${l.quantity}× ${E(l.item_name)} ${E(l.detail||'')}</span>`).join('<br>')}</p>
+  <div class="align-row"><b>${EUR(o.total_cents)}</b><div>${actions.map(([a,label])=>`<button class="small" data-do="order" data-act="${a}" data-id="${o.id}">${label}</button>`).join(' ')}</div>
+ </article>`;
+}
 function queue(who){let day=S.orders.filter(o=>o.order_day===DAY()),pending=day.filter(o=>o.payment_status==='pending'&&o.status==='awaiting_payment'),paid=day.filter(o=>o.payment_status==='paid');let cards=who==='caixa'?pending.map(o=>orderCard(o,o.number>=9000?[['paid','Simular pagamento']]:[['paid','Confirmar pagamento'],['cancel','Cancelar']])):day.filter(o=>o.payment_status==='paid'&&['queued','preparing'].includes(o.status)).map(o=>orderCard(o,o.status==='queued'?[['preparing','Iniciar preparo'],['ready','Pronto']]:[['ready','Marcar pronto']]));let ready=day.filter(o=>o.status==='ready');return header(who==='caixa'?'Caixa':'Cozinha',who==='caixa'?'Recebe pagamentos e liberta pedidos para a cozinha.':'Prepara apenas pedidos com pagamento confirmado.')+`<div class="metrics"><div>Aguardam pagamento<b>${pending.length}</b></div><div>Pedidos pagos<b>${paid.length}</b></div><div>Total recebido<b>${EUR(paid.filter(o=>o.number<9000).reduce((x,o)=>x+o.total_cents,0))}</b></div></div><div class="panel"><div class="panel-head"><h2>${who==='caixa'?'Aguardam pagamento':'A preparar'}</h2><button class="small ghost" data-do="refresh">Atualizar ↻</button></div><div class="orders">${cards.join('')||'<p class="muted">Nenhum pedido nesta fila.</p>'}</div></div>${who==='caixa'?`<div class="panel"><h2>Prontos para levantar</h2><div class="orders">${ready.map(o=>orderCard(o,[['delivered','Entregue']])).join('')||'<p class="muted">Nenhum pedido pronto.</p>'}</div></div>`:''}<p><a href="#/retirada">Abrir ecrã das senhas prontas ↗</a></p>`;}
 function admin(){let opts=[['visao','Resumo'],['produtos','Produtos'],['combos','Combos'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():qr()}`;}
 function overview(){let paid=S.orders.filter(o=>o.order_day===DAY()&&o.payment_status==='paid'&&o.number<9000),ex=S.expenses.filter(x=>x.expense_date===DAY()),a=paid.reduce((s,o)=>s+o.total_cents,0),b=ex.reduce((s,e)=>s+e.amount_cents,0);return `<div class="panel"><div class="panel-head"><h2>Receber encomendas pelo QR Code</h2><span class="status">${S.settings.orders_open?'ABERTO':'FECHADO'}</span></div><button data-do="toggle">${S.settings.orders_open?'Fechar atendimento':'Abrir atendimento'}</button><p class="muted">Pagamentos apenas no balcão. Abra somente quando a equipa estiver preparada.</p></div><div class="metrics"><div>Recebido hoje<b>${EUR(a)}</b></div><div>Despesas hoje<b>${EUR(b)}</b></div><div>Saldo hoje<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paid.length}</b></div></div>`;}
@@ -123,9 +180,28 @@ function add(x){
   paint();
 }
 function csv(){let month=S.month||DAY().slice(0,7);let lines=[['Tipo','Data','Descrição','Valor (€)'],...S.orders.filter(x=>x.order_day.startsWith(month)&&x.payment_status==='paid'&&x.number<9000).map(x=>['Receita',x.order_day,'Senha '+x.number,(x.total_cents/100).toFixed(2)]),...S.expenses.filter(x=>x.expense_date.startsWith(month)).map(x=>['Despesa',x.expense_date,x.description,(-x.amount_cents/100).toFixed(2)])];let data='\ufeff'+lines.map(x=>x.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');let u=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='lagoinha-cafe-'+month+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),500);}
+async function submitNamedOrder(data){
+ if(S.busy)return;
+ const name=String(data.get('customer_name')||'').trim().replace(/\s+/g,' ');
+ S.customerName=name;
+ if(name.length<2||name.length>60){S.notice='Informe um nome entre 2 e 60 caracteres.';paint();return;}
+ if(!S.settings.orders_open){S.notice='O atendimento está fechado neste momento.';paint();return;}
+ if(!S.cart.length||!cartAvailable()){S.notice='Algum produto já não está disponível. Revise o carrinho.';S.checkoutOpen=false;paint();return;}
+ S.busy=true;
+ try{
+   const lines=S.cart.map(x=>x.kind==='unit'?{kind:'unit',product_id:x.id,quantity:x.qty}:{kind:'combo',combo_id:x.id,food_id:x.food_id,drink_id:x.drink_id,quantity:x.qty});
+   const r=await api.rpc('create_cafe_named_order',{p_lines:lines,p_customer_name:name});
+   if(r.error)throw r.error;
+   S.cart=[];S.checkoutOpen=false;S.customerName='';S.notice='';
+   location.hash='#/pedido/'+r.data.token;
+   await loadTicket();
+ }catch(ex){S.notice='Erro ao confirmar pedido: '+(ex.message||ex);}
+ finally{S.busy=false;paint();}
+}
 root.addEventListener('click',async e=>{let b=e.target.closest('[data-do]');if(!b||S.busy)return;const k=b.dataset.do,id=b.dataset.id;try{
 if(k==='dismiss'){S.notice='';paint();return;}
 if(k==='go-cart'){document.getElementById('cart')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
+if(k==='close-checkout'){S.checkoutOpen=false;paint();return;}
 if(k==='choose-food'){S.food=id;paint();return;}
 if(k==='choose-drink'){S.drink=id;paint();return;}
 if(k==='combo-less'||k==='combo-more'){S.qty=Math.max(1,Math.min(20,S.qty+(k==='combo-more'?1:-1)));paint();return;}
@@ -134,7 +210,13 @@ if(k==='combo'){S.combo=id;paint();return;}
 if(k==='add-unit'){let p=product(id);if(!valid(p)||p.price_cents==null)throw Error('Produto indisponível');add({kind:'unit',id:p.id,name:p.name,price:p.price_cents,qty:1});return;}
 if(k==='add-combo'){let c=combo(S.combo),f=product(S.food),d=product(S.drink),n=Number(S.qty);if(!valid(c)||!valid(f)||!valid(d)||!Number.isInteger(n)||n<1||n>20)throw Error('Seleção inválida');add({kind:'combo',id:c.id,food_id:f.id,drink_id:d.id,name:c.name,detail:f.name+' + '+d.name,qty:n,price:c.price_cents});return;}
 if(k==='plus'||k==='minus'){let i=Number(b.dataset.i),x=S.cart[i];if(!x)return;let count=S.cart.reduce((n,x)=>n+x.qty,0);if(k==='plus'&&count>=20)throw Error('Limite de 20 artigos');x.qty+=k==='plus'?1:-1;if(x.qty<1)S.cart.splice(i,1);if(!cartAvailable()){x.qty-=k==='plus'?1:-1;throw Error('Quantidade indisponível deste artigo.');}paint();return;}
-if(k==='send'){if(!S.settings.orders_open)throw Error('Encomendas fechadas');if(!cartAvailable())throw Error('Um artigo já não está disponível. Atualize o pedido.');S.busy=true;let lines=S.cart.map(x=>x.kind==='unit'?{kind:'unit',product_id:x.id,quantity:x.qty}:{kind:'combo',combo_id:x.id,food_id:x.food_id,drink_id:x.drink_id,quantity:x.qty});let r=await api.rpc('create_cafe_order_v2',{p_lines:lines});if(r.error)throw r.error;S.cart=[];location.hash='#/pedido/'+r.data.token;await loadTicket();S.busy=false;paint();return;}
+if(k==='send'){
+ if(!S.settings.orders_open)throw Error('Encomendas fechadas');
+ if(!S.cart.length||!cartAvailable())throw Error('Revise os itens do carrinho.');
+ S.checkoutOpen=true;S.notice='';
+ paint();root.querySelector('#customer-name')?.focus();
+ return;
+}
 if(k==='refresh'){await sync();return;}
 if(k==='logout'){await api.auth.signOut();S.user=null;S.role=null;location.hash='#/cliente';paint();return;}
 if(k==='order'){let a=b.dataset.act;if(a==='paid'&&!confirm(S.orders.find(o=>o.id===id)?.number>=9000?'Simular a confirmação de pagamento deste pedido de TESTE? Não receba dinheiro.':'Confirmar que recebeu o pagamento presencial?'))return;if(a==='cancel'&&!confirm('Cancelar pedido não pago e devolver os itens ao estoque?'))return;let r=await api.rpc('staff_order_action',{p_order_id:id,p_action:a});if(r.error)throw r.error;await Promise.all([loadOrders(),loadCatalog()]);paint();return;}
@@ -146,7 +228,7 @@ if(k==='delete-expense'){if(!confirm('Excluir despesa?'))return;let r=await api.
 if(k==='csv'){csv();return;}if(k==='print'){window.print();return;}
 }catch(ex){S.busy=false;S.notice='Erro: '+ex.message;paint();}});
 root.addEventListener('change',e=>{let t=e.target;if(t.id==='food')S.food=t.value;if(t.id==='drink')S.drink=t.value;if(t.id==='qty')S.qty=Math.max(1,Math.min(20,Number(t.value)||1));if(t.id==='month'){S.month=t.value;paint();}});
-root.addEventListener('submit',e=>{e.preventDefault();let f=e.target,d=new FormData(f);(async()=>{S.busy=true;
+root.addEventListener('submit',e=>{e.preventDefault();let f=e.target,d=new FormData(f);if(f.id==='checkout-name-form'){submitNamedOrder(d);return;}(async()=>{S.busy=true;
 if(f.id==='login'){let r=await api.auth.signInWithPassword({email:String(d.get('email')),password:String(d.get('password'))});if(r.error)throw r.error;await auth();if(!S.role)throw Error('Conta sem autorização de equipa');await loadOrders();}
 if(f.id==='productForm'){let price=String(d.get('price')).trim(),stock=String(d.get('stock')).trim(),data={name:String(d.get('name')).trim(),category:String(d.get('category')),icon:String(d.get('icon')).trim()||'🍽️',price_cents:price===''?null:Math.round(Number(price)*100),stock_qty:stock===''?null:Number(stock),sort_order:Number(d.get('sort'))||0,active:d.get('active')==='true'};if((data.price_cents!==null&&data.price_cents<1)||(data.stock_qty!==null&&(!Number.isInteger(data.stock_qty)||data.stock_qty<0)))throw Error('Preço ou estoque inválido');let id=String(d.get('id')),r=await (id?api.from('products').update(data).eq('id',id):api.from('products').insert(data));if(r.error)throw r.error;S.editProduct=null;await loadCatalog();}
 if(f.id==='comboForm'){let stock=String(d.get('stock')).trim(),data={name:String(d.get('name')).trim(),description:String(d.get('description')).trim(),price_cents:Math.round(Number(d.get('price'))*100),stock_qty:stock===''?null:Number(stock),sort_order:Number(d.get('sort'))||0,active:d.get('active')==='true'};if(data.price_cents<1||(data.stock_qty!==null&&(!Number.isInteger(data.stock_qty)||data.stock_qty<0)))throw Error('Preço ou estoque inválido');let id=String(d.get('id')),r=await(id?api.from('cafe_combos').update(data).eq('id',id):api.from('cafe_combos').insert(data));if(r.error)throw r.error;S.editCombo=null;await loadCatalog();}
@@ -159,7 +241,7 @@ setInterval(()=>{
   if(document.hidden||S.busy)return;
   const r=route();
   if(['caixa','cozinha','admin'].includes(r)&&!allowed(r))return;
-  if(document.getElementById('login'))return;
+  if(document.getElementById('login')||S.checkoutOpen)return;
   if(['caixa','cozinha','retirada','pedido','cliente'].includes(r))sync();
 },12500);
 (async()=>{try{let m=await import('https://esm.sh/@supabase/supabase-js@2.95.0');api=m.createClient(CONFIG.supabaseUrl,CONFIG.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true}});await Promise.all([loadCatalog(),auth()]);if(['caixa','cozinha','admin'].includes(route())&&S.role)await loadOrders();if(route()==='pedido')await loadTicket();if(route()==='retirada')await loadReady();paint();if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});}catch(e){root.innerHTML='<main class="wrap"><h1>Falha ao carregar o sistema</h1><p>'+E(e.message)+'</p></main>';}})();
