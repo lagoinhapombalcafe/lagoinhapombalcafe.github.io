@@ -154,5 +154,12 @@ if(f.id==='expenseForm'){let cents=Math.round(Number(d.get('amount'))*100);if(ce
 })().then(()=>{S.notice='Registo guardado com sucesso.';S.busy=false;paint();}).catch(ex=>{S.notice='Erro: '+ex.message;S.busy=false;paint();});});
 async function sync(){try{let r=route();if(r==='cliente')await loadCatalog();else if(r==='pedido')await loadTicket();else if(r==='retirada')await loadReady();else if(['caixa','cozinha','admin'].includes(r)&&S.role)await loadOrders();paint();}catch(e){S.notice=e.message;paint();}}
 window.addEventListener('hashchange',sync);
-setInterval(()=>{if(!document.hidden&&!S.busy&&['caixa','cozinha','retirada','pedido','cliente'].includes(route()))sync();},12500);
+// Não redesenhar o formulário durante a digitação: a sincronização periódica só se aplica às áreas autorizadas.
+setInterval(()=>{
+  if(document.hidden||S.busy)return;
+  const r=route();
+  if(['caixa','cozinha','admin'].includes(r)&&!allowed(r))return;
+  if(document.getElementById('login'))return;
+  if(['caixa','cozinha','retirada','pedido','cliente'].includes(r))sync();
+},12500);
 (async()=>{try{let m=await import('https://esm.sh/@supabase/supabase-js@2.95.0');api=m.createClient(CONFIG.supabaseUrl,CONFIG.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true}});await Promise.all([loadCatalog(),auth()]);if(['caixa','cozinha','admin'].includes(route())&&S.role)await loadOrders();if(route()==='pedido')await loadTicket();if(route()==='retirada')await loadReady();paint();if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});}catch(e){root.innerHTML='<main class="wrap"><h1>Falha ao carregar o sistema</h1><p>'+E(e.message)+'</p></main>';}})();
