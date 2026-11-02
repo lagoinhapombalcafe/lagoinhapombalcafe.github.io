@@ -347,3 +347,8 @@ button.ghost:hover:not(:disabled){background:#484037}
 .product-combo-permission .product-checkbox-row small{font-weight:500;font-size:11px;line-height:1.55;color:#c5b6a3}
 .product-manager-editor>h2{color:#f3d4a9}
 @media(max-width:690px){.catalog-admin-intro{flex-direction:column;align-items:stretch;padding:20px}.catalog-admin-counter{align-self:flex-start;min-width:140px}.product-manager-list .product-manager-row .small{font-size:11px;padding:8px 10px}}
+
+
+.combo-eligible-summary{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px;margin-bottom:12px}
+.combo-eligible-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #997444;border-radius:999px;background:#453421;color:#f1d7af;font-size:12px;font-weight:750;padding:8px 12px}
+.combo-eligible-pill .product-svg{width:22px;height:22px}
