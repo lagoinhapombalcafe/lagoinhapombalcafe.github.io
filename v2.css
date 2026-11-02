@@ -291,3 +291,34 @@ button.ghost:hover:not(:disabled){background:#484037}
 .product-save-status[data-status="error"]{padding:10px 12px;border-radius:9px;background:#512c22;border:1px solid #a8694f;color:#ffe4d5;font-weight:750}
 .product-save-status[data-status="pending"]{color:#f3d29f;font-weight:800}
 .save-product-btn:disabled{opacity:.65;cursor:progress}
+
+
+/* Ícones visuais do catálogo: salgados, doces e bebidas */
+.product-svg{display:inline-block;vertical-align:middle;width:1.25em;height:1.25em;max-width:100%;max-height:100%;flex-shrink:0}
+.icon-choice .product-svg{width:38px;height:38px}
+.product-icon-preview .product-svg{width:42px;height:42px}
+.item .emoji{display:inline-flex;align-items:center;justify-content:center;min-width:36px;width:40px;height:40px;font-size:27px}
+.unit-art .product-svg{width:38px;height:38px}
+.choice-icon .product-svg{width:34px;height:34px}
+.ranking-name .product-svg{width:21px;height:21px}
+.product-icon-entry{display:flex;align-items:center;gap:11px}
+.product-icon-entry input{flex:1;min-width:0}
+.product-icon-preview{display:flex;justify-content:center;align-items:center;flex:0 0 55px;width:55px;height:55px;background:linear-gradient(135deg,#4b3724,#241e1a);border:1px solid #927044;border-radius:13px;font-size:30px}
+.icon-gallery{border:1px solid #64523b;border-radius:15px;padding:0 13px 13px;background:linear-gradient(155deg,#302720,#1e1d1d);min-width:0}
+.icon-gallery>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 3px;color:#f3ddb7;font-weight:850;font-size:13px}
+.icon-gallery>summary::-webkit-details-marker{display:none}
+.icon-gallery>summary:before{content:"▸";font-size:13px;color:#d7ad72;transition:transform .15s;margin-right:1px}
+.icon-gallery[open]>summary:before{transform:rotate(90deg)}
+.icon-gallery>summary>span{flex:1}
+.icon-gallery>summary small{font-size:11px;color:#b6a48d;font-weight:650}
+.icon-gallery-help{font-size:12px;margin:2px 0 17px;color:#c0b2a3;line-height:1.5}
+.icon-gallery-group{margin:0 0 18px}
+.icon-gallery-group:last-child{margin-bottom:2px}
+.icon-gallery-group>h3{font-size:12px;text-transform:uppercase;letter-spacing:1.1px;font-weight:900;color:#e1bc82;margin:0 0 10px}
+.icon-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(79px,1fr));gap:8px;min-width:0}
+.icon-choice{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;min-width:0;min-height:94px;padding:10px 5px;background:#252323;color:#dfd2bd;border:1px solid #554534;border-radius:12px;transition:background .16s,border-color .16s}
+.icon-choice:hover:not(:disabled){background:#443629;transform:none}
+.icon-choice.is-selected{background:linear-gradient(155deg,#59432b,#423020);border:2px solid #e9b96f;color:#fff7ea;box-shadow:inset 0 0 0 1px #e7bc7940}
+.icon-choice-visual{display:flex;align-items:center;justify-content:center;width:43px;height:43px;font-size:32px;line-height:1}
+.icon-choice-caption{display:block;font-size:10px;line-height:1.22;font-weight:750;text-align:center;overflow-wrap:anywhere}
+@media(max-width:740px){.icon-gallery-grid{grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:7px}.icon-choice{min-height:85px}.icon-choice-caption{font-size:9px}}
