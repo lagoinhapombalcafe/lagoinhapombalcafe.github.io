@@ -35,10 +35,72 @@ async function loadOrders(){if(!S.role)return;const r=await api.from('orders').s
 async function loadTicket(){let token=location.hash.split('/')[2];if(!/^[\da-f-]{36}$/i.test(token||'')){S.ticket=null;return;}let r=await api.rpc('get_cafe_ticket_v2',{p_token:token});if(r.error)throw r.error;S.ticket=r.data;}
 async function loadReady(){let r=await api.rpc('get_ready_tickets');if(r.error)throw r.error;S.ready=(r.data||[]).map(x=>x.number);}
 async function work(job){if(S.busy)return;S.busy=true;try{await job();S.notice='';}catch(e){S.notice='Erro: '+(e.message||e);}finally{S.busy=false;paint();}}
-function menu(){let foods=S.products.filter(p=>p.category==='food'&&valid(p)),drinks=S.products.filter(p=>p.category==='drink'&&valid(p)),combos=S.combos.filter(valid),chosen=combo(S.combo)||combos[0];
-let select=(arr,chosen)=>arr.map(p=>`<option value="${p.id}" ${p.id===chosen?'selected':''}>${E(p.name)}${p.stock_qty===null?'':` · restam ${p.stock_qty}`}</option>`).join('');
-return header('O teu domingo começa aqui.','Escolhe o pequeno-almoço pelo telemóvel, paga no caixa e levanta com a tua senha.')+(!S.settings.orders_open?'<div class="closed">O café não está a receber pedidos neste momento. O administrador pode abrir o atendimento.</div>':'')+`<div class="main-grid"><div class="panel"><div class="panel-head"><h2>Combos</h2><span class="label">1 alimento + 1 bebida</span></div>${combos.map(x=>`<button class="combo-option ${chosen?.id===x.id?'current':''}" data-do="combo" data-id="${x.id}"><span><b>${E(x.name)}</b><small>${E(x.description)}</small></span><strong>${EUR(x.price_cents)}</strong></button>`).join('')||'<p>Nenhum combo disponível.</p>'}<div class="form-grid"><label>Alimento<select id="food">${select(foods,S.food)}</select></label><label>Bebida<select id="drink">${select(drinks,S.drink)}</select></label><div class="align-row"><label>Quantidade<input id="qty" type="number" min="1" max="20" value="${S.qty}"></label><button data-do="add-combo" ${!chosen||!foods.length||!drinks.length?'disabled':''}>+ Adicionar combo</button></div></div></div><div class="panel"><div class="panel-head"><h2>Produtos avulsos</h2><span class="label">Escolhe individualmente</span></div>${S.products.filter(p=>p.active).map(p=>`<div class="item"><span class="emoji">${E(p.icon)}</span><div><b>${E(p.name)}</b><small>${p.price_cents===null?'Preço por definir':EUR(p.price_cents)} ${p.stock_qty===null?'':`· ${p.stock_qty} unidades`}</small></div><button class="small" data-do="add-unit" data-id="${p.id}" ${!valid(p)||p.price_cents===null?'disabled':''}>Adicionar</button></div>`).join('')}</div></div>
-<section class="panel cart" id="cart"><div class="panel-head"><h2>O meu pedido</h2><span class="label">${S.cart.reduce((n,x)=>n+x.qty,0)} artigos</span></div>${S.cart.length?S.cart.map((l,i)=>`<div class="cart-line"><div><b>${E(l.name)}</b><small>${E(l.detail||'')} · ${l.qty} × ${EUR(l.price)}</small></div><div><b>${EUR(l.qty*l.price)}</b> <button class="small ghost" data-do="minus" data-i="${i}">−</button><button class="small ghost" data-do="plus" data-i="${i}">+</button></div></div>`).join(''):'<p class="muted">Adiciona um combo ou produto ao pedido.</p>'}<div class="checkout"><b>Total: ${EUR(S.cart.reduce((s,x)=>s+x.qty*x.price,0))}</b><button data-do="send" ${!S.settings.orders_open||!S.cart.length||S.busy?'disabled':''}>Confirmar · pagar no balcão →</button><small>Não é necessário cadastro. Pagamento pelo app desativado.</small></div></section>`;}
+function cartAvailable(){
+  const tally=new Map();
+  for(const row of S.cart){
+    if(row.kind==='unit'){
+      const p=product(row.id);
+      if(!valid(p)||p.price_cents===null)return false;
+      tally.set('p:'+row.id,(tally.get('p:'+row.id)||0)+row.qty);
+    }else{
+      const c=combo(row.id),f=product(row.food_id),d=product(row.drink_id);
+      if(!valid(c)||!valid(f)||!valid(d))return false;
+      tally.set('c:'+row.id,(tally.get('c:'+row.id)||0)+row.qty);
+      tally.set('p:'+row.food_id,(tally.get('p:'+row.food_id)||0)+row.qty);
+      tally.set('p:'+row.drink_id,(tally.get('p:'+row.drink_id)||0)+row.qty);
+    }
+  }
+  for(const [key,num] of tally){
+    const p=key.slice(0,2)==='c:'?combo(key.slice(2)):product(key.slice(2));
+    if(!p||p.stock_qty!==null&&num>p.stock_qty)return false;
+  }
+  return true;
+}
+function menu(){
+  const foods=S.products.filter(p=>p.category==='food'&&valid(p));
+  const drinks=S.products.filter(p=>p.category==='drink'&&valid(p));
+  const combos=S.combos.filter(valid);
+  const singles=S.products.filter(p=>valid(p)&&p.price_cents!==null);
+  const chosen=combo(S.combo)&&valid(combo(S.combo))?combo(S.combo):combos[0];
+  const count=S.cart.reduce((total,row)=>total+row.qty,0);
+  const total=S.cart.reduce((sum,row)=>sum+row.qty*row.price,0);
+  const canCheckout=cartAvailable();
+  const choiceButtons=(array,selected,what)=>array.map(p=>`<button type="button" class="choice-tile ${selected===p.id?'selected':''}" data-do="choose-${what}" data-id="${E(p.id)}" aria-pressed="${selected===p.id}"><span class="choice-icon">${E(p.icon||'🍽️')}</span><span class="choice-name">${E(p.name)}</span><span class="choice-check">${selected===p.id?'✓':'+'}</span></button>`).join('');
+  const comboCards=combos.map(c=>`<button type="button" class="combo-option ${chosen?.id===c.id?'current':''}" data-do="combo" data-id="${E(c.id)}" aria-pressed="${chosen?.id===c.id}"><span class="combo-symbol">✦</span><span class="combo-text"><strong>${E(c.name)}</strong><small>${E(c.description||'Um alimento e uma bebida')}</small></span><span class="combo-price">${EUR(c.price_cents)}</span></button>`).join('');
+  const unitCards=singles.map(p=>`<article class="unit-card"><span class="unit-art">${E(p.icon||'🍽️')}</span><span class="unit-info"><strong>${E(p.name)}</strong><small>${p.category==='drink'?'Bebida':'Alimento'} · ${EUR(p.price_cents)}</small></span><button type="button" class="unit-add" data-do="add-unit" data-id="${E(p.id)}" aria-label="Adicionar ${E(p.name)} ao pedido">＋</button></article>`).join('');
+  return `<section class="client-hero">
+    <div class="client-hero-text"><span class="hero-kicker"><span class="hero-dot"></span> LAGOINHA POMBAL · DOMINGOS 9H–10H</span>
+      <h1>Seu café.<br><em>Seu momento.</em></h1>
+      <p>Escolha o que mais gosta, monte seu pedido e aproveite a comunhão. Simples assim.</p>
+      <div class="hero-pills"><span>✓ Sem cadastro</span><span>✓ Pague no balcão</span></div>
+    </div><div class="hero-graphic" aria-hidden="true"><span class="graphic-sun"></span><span class="graphic-cup">☕</span><span class="graphic-ring"></span></div>
+  </section>
+  ${!S.settings.orders_open?'<div class="closed"><strong>Atendimento temporariamente fechado</strong><span>Você pode conhecer o cardápio. Os pedidos serão liberados pela equipa do café.</span></div>':''}
+  <div class="menu-intro"><span class="section-eyebrow">FEITO PARA O SEU DOMINGO</span><h2>O que vai pedir hoje?</h2><p>Combine um combo com outros produtos. Tudo fica no mesmo pedido.</p></div>
+  <section class="menu-split">
+    <div class="panel combo-panel"><div class="panel-head"><div><span class="section-eyebrow">01 · MAIS PEDIDOS</span><h2>Combos</h2></div><span class="section-icon">🥐</span></div>
+      ${combos.length&&foods.length&&drinks.length?`${comboCards}
+        <div class="choice-section"><div class="choice-title"><b>Escolha o alimento</b><span>1 por combo</span></div><div class="choice-grid">${choiceButtons(foods,S.food,'food')}</div></div>
+        <div class="choice-section"><div class="choice-title"><b>Escolha a bebida</b><span>1 por combo</span></div><div class="choice-grid">${choiceButtons(drinks,S.drink,'drink')}</div></div>
+        <div class="combo-add-row"><div class="qty-group"><span>Quantidade</span><div class="qty-stepper"><button type="button" data-do="combo-less" aria-label="Diminuir quantidade">−</button><strong>${S.qty}</strong><button type="button" data-do="combo-more" aria-label="Aumentar quantidade">+</button></div></div>
+          <button type="button" class="combo-add-btn" data-do="add-combo">Adicionar combo <span>↗</span></button></div>`
+      :'<p class="empty-menu">Os combos não estão disponíveis neste momento.</p>'}
+    </div>
+    <div class="panel singles-panel"><div class="panel-head"><div><span class="section-eyebrow">02 · ESCOLHA LIVRE</span><h2>Itens individuais</h2></div><span class="section-icon">✦</span></div>
+      <p class="muted singles-caption">Acrescente um salgado ou bebida ao combo, ou peça apenas o que desejar.</p>
+      ${singles.length?unitCards:'<p class="empty-menu">Os produtos individuais serão disponibilizados em breve.</p>'}
+      <div class="menu-note"><span>☕</span><p>Um bom café fica ainda melhor quando compartilhado.</p></div>
+    </div>
+  </section>
+  <section class="panel cart" id="cart"><div class="panel-head"><div><span class="section-eyebrow">03 · RESUMO</span><h2>Seu pedido</h2></div><span class="cart-count">${count} ${count===1?'item':'itens'}</span></div>
+    ${S.cart.length?S.cart.map((row,i)=>`<div class="cart-line"><div class="cart-details"><b>${E(row.name)}</b>${row.detail?`<small>${E(row.detail)}</small>`:''}<small>${EUR(row.price)} cada</small></div>
+      <div class="cart-end"><b>${EUR(row.qty*row.price)}</b><div class="cart-stepper"><button type="button" data-do="minus" data-i="${i}" aria-label="Retirar um">−</button><span>${row.qty}</span><button type="button" data-do="plus" data-i="${i}" aria-label="Adicionar um">+</button></div></div></div>`).join('')
+      :'<div class="empty-cart"><span>🛍️</span><h3>O carrinho está vazio</h3><p>Escolha um combo ou um produto individual acima.</p></div>'}
+    ${!canCheckout&&S.cart.length?'<p class="stock-alert">Um dos itens do carrinho já não está disponível. Ajuste a quantidade ou retire-o.</p>':''}
+    <div class="checkout"><div class="checkout-total"><span>Total do pedido</span><strong>${EUR(total)}</strong></div><button class="checkout-btn" type="button" data-do="send" ${!S.settings.orders_open||!S.cart.length||!canCheckout||S.busy?'disabled':''}>Confirmar pedido <span>→</span></button><small>Sem cadastro. Pague no balcão e acompanhe sua senha de retirada.</small></div>
+  </section>
+  ${S.cart.length?`<div class="floating-cart"><div><small>${count} ${count===1?'item':'itens'} no pedido</small><strong>${EUR(total)}</strong></div><button type="button" data-do="go-cart">Ver pedido <span>↑</span></button></div>`:''}`;
+}
 function ticket(){const t=S.ticket;if(!t)return '<div class="panel">Pedido não encontrado. <button data-do="refresh">Atualizar</button></div>';return `<div class="panel ticket"><span class="eyebrow">LAGOINHA CAFÉ · SENHA</span><h1>${String(t.number).padStart(3,'0')}</h1><strong class="status">${E(states[t.status]||t.status)}</strong><p>${(t.lines||[]).map(x=>`${x.quantity}× ${E(x.item_name)} ${E(x.detail||'')}`).join('<br>')}</p><h3>${EUR(t.total_cents)}</h3><p class="muted">Apresenta esta senha no caixa para pagar. Só depois a cozinha recebe o pedido.</p><button data-do="refresh">Atualizar estado</button></div>`;}
 function pickup(){return `<div class="pickup"><header>☕ LAGOINHA CAFÉ</header><h1>PEDIDOS PRONTOS</h1><section>${S.ready.length?S.ready.map(n=>`<b>${String(n).padStart(3,'0')}</b>`).join(''):'<p>Aguardando os próximos pedidos.</p>'}</section><p>Dirija-se ao balcão quando a sua senha aparecer.</p><a href="#/cliente">Voltar ao cardápio</a></div>`;}
 function login(r){return header('Área da equipa','Acesso protegido para caixa, cozinha e administração.')+`<section class="panel login"><h2>${E({caixa:'Caixa',cozinha:'Cozinha',admin:'Administrador'}[r]||'Equipa')}</h2>${S.user?`<p>A conta ${E(S.user.email)} ainda não está autorizada nesta área.</p><button data-do="logout">Sair da conta</button>`:`<form id="login" class="form-grid"><label>Email<input type="email" name="email" required autocomplete="username"></label><label>Palavra-passe<input type="password" name="password" required autocomplete="current-password"></label><button>Entrar</button></form>`}<p class="muted">Apenas contas criadas e autorizadas no Supabase têm acesso à equipa.</p></section>`;}
@@ -50,15 +112,29 @@ function productsPanel(){let p=product(S.editProduct);return `<div class="main-g
 function combosPanel(){let c=combo(S.editCombo);return `<div class="main-grid"><section class="panel"><div class="panel-head"><h2>Combos cadastrados</h2><button class="small" data-do="edit-combo" data-id="">+ Novo</button></div>${S.combos.map(x=>`<div class="item"><span class="emoji">🥐</span><div><b>${E(x.name)}</b><small>${EUR(x.price_cents)} · ${x.active?'Ativo':'Oculto'} · Estoque: ${x.stock_qty??'ilimitado'}</small></div><button class="small ghost" data-do="edit-combo" data-id="${x.id}">Editar</button></div>`).join('')}</section><section class="panel"><h2>${c?'Editar combo':'Novo combo'}</h2><p class="muted">O combo permite escolher um alimento e uma bebida disponíveis.</p><form id="comboForm" class="form-grid"><input type="hidden" name="id" value="${E(c?.id||'')}"><label>Nome<input name="name" required maxlength="90" value="${E(c?.name||'')}"></label><label>Descrição<input name="description" maxlength="160" value="${E(c?.description||'Escolha 1 alimento e 1 bebida')}"></label><label>Preço em €<input type="number" step="0.01" min="0.01" name="price" required value="${c?(c.price_cents/100).toFixed(2):''}"></label><label>Estoque (vazio = ilimitado)<input type="number" min="0" name="stock" value="${c?.stock_qty??''}"></label><label>Ordem<input type="number" name="sort" value="${c?.sort_order??10}"></label><label>Estado<select name="active"><option value="true" ${c?.active!==false?'selected':''}>Ativo</option><option value="false" ${c?.active===false?'selected':''}>Oculto</option></select></label><button>Guardar combo</button></form></section></div>`;}
 function financePanel(){const month=S.month||DAY().slice(0,7),paid=S.orders.filter(x=>x.order_day.startsWith(month)&&x.payment_status==='paid'),ex=S.expenses.filter(x=>x.expense_date.startsWith(month)),a=paid.reduce((n,x)=>n+x.total_cents,0),b=ex.reduce((n,x)=>n+x.amount_cents,0);return `<div class="panel"><div class="panel-head"><h2>Financeiro</h2><label>Mês <input id="month" type="month" value="${month}"></label></div><div class="metrics"><div>Receita confirmada<b>${EUR(a)}</b></div><div>Despesas<b>${EUR(b)}</b></div><div>Saldo<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paid.length}</b></div></div><p><button class="small ghost" data-do="csv">Exportar CSV</button></p><h3>Registar despesa</h3><form id="expenseForm" class="expense-row"><label>Data<input type="date" name="date" required value="${DAY()}"></label><label>Descrição<input name="description" required maxlength="180"></label><label>Categoria<select name="category"><option>Ingredientes</option><option>Embalagens</option><option>Equipamentos</option><option>Outros</option></select></label><label>Valor (€)<input type="number" name="amount" required min="0.01" step="0.01"></label><button>Adicionar</button></form>${ex.map(x=>`<div class="item"><div><b>${E(x.description)}</b><small>${E(x.expense_date)} · ${E(x.category)}</small></div><strong>${EUR(x.amount_cents)}</strong><button class="small ghost" data-do="delete-expense" data-id="${x.id}">Excluir</button></div>`).join('')||'<p class="muted">Sem despesas neste mês.</p>'}<p class="muted">Saldo é receita recebida menos despesas registadas. Não inclui impostos nem custos não lançados.</p></div>`;}
 function qr(){let url=location.origin+location.pathname+'#/cliente',img='https://api.qrserver.com/v1/create-qr-code/?size=450x450&data='+encodeURIComponent(url);return `<div class="panel qr"><img src="${img}" alt="QR Code do Lagoinha Café"><div><h2>Faça o pedido pelo telemóvel</h2><p>Sem cadastro. Selecione, receba uma senha e pague no caixa.</p><small>${E(url)}</small><p><button data-do="print">Imprimir QR Code</button></p></div></div>`;}
-function add(x){if(S.cart.reduce((s,x)=>s+x.qty,0)+x.qty>20)throw Error('Limite de 20 artigos por pedido');let old=S.cart.find(i=>i.kind===x.kind&&i.id===x.id&&i.food_id===x.food_id&&i.drink_id===x.drink_id);if(old)old.qty+=x.qty;else S.cart.push(x);paint();$('#cart')?.scrollIntoView({behavior:'smooth',block:'nearest'});}
+function add(x){
+  if(S.cart.reduce((total,row)=>total+row.qty,0)+x.qty>20)throw Error('O limite é de 20 artigos por pedido');
+  const old=S.cart.find(row=>row.kind===x.kind&&row.id===x.id&&row.food_id===x.food_id&&row.drink_id===x.drink_id);
+  if(old)old.qty+=x.qty;else S.cart.push(x);
+  if(!cartAvailable()){
+    if(old)old.qty-=x.qty;else S.cart.pop();
+    throw Error('Este artigo já não está disponível nesta quantidade.');
+  }
+  paint();
+}
 function csv(){let month=S.month||DAY().slice(0,7);let lines=[['Tipo','Data','Descrição','Valor (€)'],...S.orders.filter(x=>x.order_day.startsWith(month)&&x.payment_status==='paid').map(x=>['Receita',x.order_day,'Senha '+x.number,(x.total_cents/100).toFixed(2)]),...S.expenses.filter(x=>x.expense_date.startsWith(month)).map(x=>['Despesa',x.expense_date,x.description,(-x.amount_cents/100).toFixed(2)])];let data='\ufeff'+lines.map(x=>x.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');let u=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='lagoinha-cafe-'+month+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),500);}
 root.addEventListener('click',async e=>{let b=e.target.closest('[data-do]');if(!b||S.busy)return;const k=b.dataset.do,id=b.dataset.id;try{
 if(k==='dismiss'){S.notice='';paint();return;}
+if(k==='go-cart'){document.getElementById('cart')?.scrollIntoView({behavior:'smooth',block:'start'});return;}
+if(k==='choose-food'){S.food=id;paint();return;}
+if(k==='choose-drink'){S.drink=id;paint();return;}
+if(k==='combo-less'||k==='combo-more'){S.qty=Math.max(1,Math.min(20,S.qty+(k==='combo-more'?1:-1)));paint();return;}
+
 if(k==='combo'){S.combo=id;paint();return;}
 if(k==='add-unit'){let p=product(id);if(!valid(p)||p.price_cents==null)throw Error('Produto indisponível');add({kind:'unit',id:p.id,name:p.name,price:p.price_cents,qty:1});return;}
 if(k==='add-combo'){let c=combo(S.combo),f=product(S.food),d=product(S.drink),n=Number(S.qty);if(!valid(c)||!valid(f)||!valid(d)||!Number.isInteger(n)||n<1||n>20)throw Error('Seleção inválida');add({kind:'combo',id:c.id,food_id:f.id,drink_id:d.id,name:c.name,detail:f.name+' + '+d.name,qty:n,price:c.price_cents});return;}
-if(k==='plus'||k==='minus'){let i=Number(b.dataset.i),x=S.cart[i];if(!x)return;let count=S.cart.reduce((n,x)=>n+x.qty,0);if(k==='plus'&&count>=20)throw Error('Limite de 20 artigos');x.qty+=k==='plus'?1:-1;if(x.qty<1)S.cart.splice(i,1);paint();return;}
-if(k==='send'){if(!S.settings.orders_open)throw Error('Encomendas fechadas');S.busy=true;let lines=S.cart.map(x=>x.kind==='unit'?{kind:'unit',product_id:x.id,quantity:x.qty}:{kind:'combo',combo_id:x.id,food_id:x.food_id,drink_id:x.drink_id,quantity:x.qty});let r=await api.rpc('create_cafe_order_v2',{p_lines:lines});if(r.error)throw r.error;S.cart=[];location.hash='#/pedido/'+r.data.token;await loadTicket();S.busy=false;paint();return;}
+if(k==='plus'||k==='minus'){let i=Number(b.dataset.i),x=S.cart[i];if(!x)return;let count=S.cart.reduce((n,x)=>n+x.qty,0);if(k==='plus'&&count>=20)throw Error('Limite de 20 artigos');x.qty+=k==='plus'?1:-1;if(x.qty<1)S.cart.splice(i,1);if(!cartAvailable()){x.qty-=k==='plus'?1:-1;throw Error('Quantidade indisponível deste artigo.');}paint();return;}
+if(k==='send'){if(!S.settings.orders_open)throw Error('Encomendas fechadas');if(!cartAvailable())throw Error('Um artigo já não está disponível. Atualize o pedido.');S.busy=true;let lines=S.cart.map(x=>x.kind==='unit'?{kind:'unit',product_id:x.id,quantity:x.qty}:{kind:'combo',combo_id:x.id,food_id:x.food_id,drink_id:x.drink_id,quantity:x.qty});let r=await api.rpc('create_cafe_order_v2',{p_lines:lines});if(r.error)throw r.error;S.cart=[];location.hash='#/pedido/'+r.data.token;await loadTicket();S.busy=false;paint();return;}
 if(k==='refresh'){await sync();return;}
 if(k==='logout'){await api.auth.signOut();S.user=null;S.role=null;location.hash='#/cliente';paint();return;}
 if(k==='order'){let a=b.dataset.act;if(a==='paid'&&!confirm('Confirmar que recebeu o pagamento presencial?'))return;if(a==='cancel'&&!confirm('Cancelar pedido não pago e devolver os itens ao estoque?'))return;let r=await api.rpc('staff_order_action',{p_order_id:id,p_action:a});if(r.error)throw r.error;await Promise.all([loadOrders(),loadCatalog()]);paint();return;}
@@ -76,7 +152,7 @@ if(f.id==='productForm'){let price=String(d.get('price')).trim(),stock=String(d.
 if(f.id==='comboForm'){let stock=String(d.get('stock')).trim(),data={name:String(d.get('name')).trim(),description:String(d.get('description')).trim(),price_cents:Math.round(Number(d.get('price'))*100),stock_qty:stock===''?null:Number(stock),sort_order:Number(d.get('sort'))||0,active:d.get('active')==='true'};if(data.price_cents<1||(data.stock_qty!==null&&(!Number.isInteger(data.stock_qty)||data.stock_qty<0)))throw Error('Preço ou estoque inválido');let id=String(d.get('id')),r=await(id?api.from('cafe_combos').update(data).eq('id',id):api.from('cafe_combos').insert(data));if(r.error)throw r.error;S.editCombo=null;await loadCatalog();}
 if(f.id==='expenseForm'){let cents=Math.round(Number(d.get('amount'))*100);if(cents<1)throw Error('Valor inválido');let r=await api.from('cafe_expenses').insert({expense_date:d.get('date'),description:String(d.get('description')).trim(),category:String(d.get('category')),amount_cents:cents,created_by:S.user.id});if(r.error)throw r.error;await loadOrders();}
 })().then(()=>{S.notice='Registo guardado com sucesso.';S.busy=false;paint();}).catch(ex=>{S.notice='Erro: '+ex.message;S.busy=false;paint();});});
-async function sync(){try{let r=route();if(r==='pedido')await loadTicket();else if(r==='retirada')await loadReady();else if(['caixa','cozinha','admin'].includes(r)&&S.role)await loadOrders();paint();}catch(e){S.notice=e.message;paint();}}
+async function sync(){try{let r=route();if(r==='cliente')await loadCatalog();else if(r==='pedido')await loadTicket();else if(r==='retirada')await loadReady();else if(['caixa','cozinha','admin'].includes(r)&&S.role)await loadOrders();paint();}catch(e){S.notice=e.message;paint();}}
 window.addEventListener('hashchange',sync);
-setInterval(()=>{if(!document.hidden&&!S.busy&&['caixa','cozinha','retirada','pedido'].includes(route()))sync();},5500);
+setInterval(()=>{if(!document.hidden&&!S.busy&&['caixa','cozinha','retirada','pedido','cliente'].includes(route()))sync();},12500);
 (async()=>{try{let m=await import('https://esm.sh/@supabase/supabase-js@2.95.0');api=m.createClient(CONFIG.supabaseUrl,CONFIG.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true}});await Promise.all([loadCatalog(),auth()]);if(['caixa','cozinha','admin'].includes(route())&&S.role)await loadOrders();if(route()==='pedido')await loadTicket();if(route()==='retirada')await loadReady();paint();if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});}catch(e){root.innerHTML='<main class="wrap"><h1>Falha ao carregar o sistema</h1><p>'+E(e.message)+'</p></main>';}})();
