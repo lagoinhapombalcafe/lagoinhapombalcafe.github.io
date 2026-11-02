@@ -283,3 +283,11 @@ button.ghost:hover:not(:disabled){background:#484037}
  .analytics-month-label,.analytics-foot button{display:none!important}
  .revenue-scroll{overflow:visible}
 }
+
+
+/* Gravação do produto avulso — feedback junto ao campo, sem apagar dados */
+.product-save-status{margin:2px 0 0;min-height:1.4em;font-size:13px;line-height:1.5;color:#c5baa9}
+.product-save-status[data-status="success"]{padding:10px 12px;border-radius:9px;background:#183e2a;border:1px solid #3b8658;color:#d9f7df;font-weight:800}
+.product-save-status[data-status="error"]{padding:10px 12px;border-radius:9px;background:#512c22;border:1px solid #a8694f;color:#ffe4d5;font-weight:750}
+.product-save-status[data-status="pending"]{color:#f3d29f;font-weight:800}
+.save-product-btn:disabled{opacity:.65;cursor:progress}
