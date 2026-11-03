@@ -13,8 +13,8 @@ const valid=x=>x&&x.active&&(x.stock_qty===null||x.stock_qty>0);
 const getDate=x=>new Date(x).toLocaleTimeString('pt-PT',{timeZone:'Europe/Lisbon',hour:'2-digit',minute:'2-digit'});
 const states={awaiting_payment:'Aguarda pagamento',queued:'Na fila',preparing:'Em preparação',ready:'Pronto',delivered:'Entregue',cancelled:'Cancelado'};
 const alert=()=>S.notice?`<p class="alert">${E(S.notice)} <button class="small" data-do="dismiss">×</button></p>`:'';
-const header=(title,sub)=>`<section class="hero"><div><span class="eyebrow">LAGOINHA CAFÉ · DOMINGOS 9H–10H</span><h1>${title}</h1><p>${sub}</p></div><img src="./assets/icon.svg" class="hero-brand-icon" alt="" aria-hidden="true"></section>`;
-const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente" aria-label="Lagoinha Café — ir para o cardápio"><img class="brand-logo" src="./assets/logo-lagoinha-cafe.svg" alt="Lagoinha Café" width="190" height="56" decoding="async"></a><nav aria-label="Navegação principal"><a href="#/cliente" class="nav-main-link">Cliente</a><a href="#/equipa" class="nav-main-link">Equipa</a>${S.role==="admin"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a><a class="nav-staff-direct" href="#/cozinha">Cozinha</a><a class="nav-staff-direct" href="#/admin">Administrador</a>`:S.role==="cashier"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a class="nav-staff-direct" href="#/cozinha">Cozinha</a>`:''}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Café · Rua Prof. Veiga Simão, nº 4 · Pombal · Pedidos presenciais</footer>`;
+const header=(title,sub)=>`<section class="hero"><div><span class="eyebrow">LAGOINHA CAFÉ · DOMINGOS 9H–10H</span><h1>${title}</h1><p>${sub}</p></div><img src="./assets/icon.svg?v=4.4" class="hero-brand-icon" alt="" aria-hidden="true"></section>`;
+const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente" aria-label="Lagoinha Café — ir para o cardápio"><img class="brand-logo" src="./assets/logo-lagoinha-cafe.svg?v=4.4" alt="Lagoinha Café" width="96" height="96" decoding="async"></a><nav aria-label="Navegação principal"><a href="#/cliente" class="nav-main-link">Cliente</a><a href="#/equipa" class="nav-main-link">Equipa</a>${S.role==="admin"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a><a class="nav-staff-direct" href="#/cozinha">Cozinha</a><a class="nav-staff-direct" href="#/admin">Administrador</a>`:S.role==="cashier"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a class="nav-staff-direct" href="#/cozinha">Cozinha</a>`:''}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Café · Rua Prof. Veiga Simão, nº 4 · Pombal · Pedidos presenciais</footer>`;
 function paint(){let r=route(),body;
 if(['marmitex','marmitex-pedido','marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(r))body=['marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(r)&&!allowed(r)?login(r):MX.mxRender(r,S.role);
 else if(r==='cliente')body=menu();
@@ -155,7 +155,7 @@ function ticket(){
  const name=String(t.customer_name||'').trim();
  return `<div class="panel ticket">
    <span class="eyebrow">LAGOINHA CAFÉ · MEU PEDIDO</span>
-   <img class="ticket-brand-icon" src="./assets/icon.svg" alt="">
+   <img class="ticket-brand-icon" src="./assets/icon.svg?v=4.4" alt="">
    <h1 class="customer-ticket-name">${E(name||'Pedido recebido')}</h1>
    <p class="ticket-internal-ref">Referência do pedido · #${String(t.number).padStart(3,'0')}</p>
    <strong class="status">${E(states[t.status]||t.status)}</strong>
@@ -170,7 +170,7 @@ function ticket(){
  </div>`;
 }
 function pickup(){
- return `<div class="pickup"><header class="pickup-branded-header"><img src="./assets/logo-lagoinha-cafe.svg" alt="Lagoinha Café"></header>
+ return `<div class="pickup"><header class="pickup-branded-header"><img src="./assets/logo-lagoinha-cafe.svg?v=4.4" alt="Lagoinha Café"></header>
  <h1>PEDIDOS PRONTOS</h1>
  <section>${S.ready.length?S.ready.map(x=>`<b class="pickup-name">${E(x.customer_name||'Cliente')}<small class="pickup-ref">REF. ${String(x.number).padStart(3,'0')}</small></b>`).join(''):'<p>Aguardando os próximos pedidos.</p>'}</section>
  <p>Quando vir o seu nome, dirija-se ao balcão de retirada.</p>
