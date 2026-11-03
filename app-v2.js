@@ -1,5 +1,5 @@
 import {CONFIG} from './config.js';
-import * as MX from './marmitex.js?v=4.2';
+import * as MX from './marmitex.js?v=4.6';
 const $=s=>document.querySelector(s), root=$('#app');
 const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',editProduct:null,editCombo:null,month:'',analytics:null,analyticsError:'',busy:false,notice:'',checkoutOpen:false,customerName:'',loginEmail:''};
 let api;
@@ -323,13 +323,20 @@ function analyticsPanel(){
    <div class="analytics-foot"><small>Os pedidos de teste não entram nos gráficos. Os valores representam pagamentos confirmados, antes de descontar despesas.</small><button class="small ghost" data-do="refresh-stats">Atualizar gráficos ↻</button></div>
  </section>`;
 }
-function admin(){let opts=[['visao','Resumo'],['estatisticas','Gráficos'],['produtos','Individuais'],['combos','Combos'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='estatisticas'?analyticsPanel():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():qr()}`;}
+function admin(){let opts=[['visao','Resumo'],['estatisticas','Gráficos'],['produtos','Individuais'],['combos','Combos'],['marmitex','Marmitex'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='estatisticas'?analyticsPanel():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():S.tab==='marmitex'?marmitexAdminPanel():qr()}`;}
+function marmitexAdminPanel(){
+ return `<section class="admin-marmitex" aria-label="Cadastro e gestão de marmitex">
+ <div class="admin-marmitex-intro"><div><strong>Cadastro de Marmitex</strong><p>Configure os domingos, cadastre pratos, preços e quantidades. As encomendas e o caixa das marmitex são independentes das vendas do café.</p></div><a href="./marmitex.html" target="_blank" rel="noopener noreferrer">Ver página de encomendas ↗</a></div>
+ ${MX.mxRender('marmitex-admin',S.role)}
+ </section>`;
+}
 function overview(){
  const paid=S.orders.filter(o=>o.order_day===DAY()&&o.payment_status==='paid'&&o.number<9000);
  const ex=S.expenses.filter(x=>x.expense_date===DAY());
  const a=paid.reduce((s,o)=>s+o.total_cents,0);
  const b=ex.reduce((s,e)=>s+e.amount_cents,0);
  return `<div class="panel"><div class="panel-head"><h2>Receber encomendas pelo QR Code</h2><span class="status">${S.settings.orders_open?'ABERTO':'FECHADO'}</span></div><button data-do="toggle">${S.settings.orders_open?'Fechar atendimento':'Abrir atendimento'}</button><p class="muted">Pagamentos apenas no balcão. Abra somente quando a equipa estiver preparada.</p></div>
+ <section class="admin-marmitex-quick"><div><strong>🍱 Cadastro de Marmitex</strong><p>Defina a semana de retirada, os pratos, preços e limites de encomendas.</p></div><button type="button" data-do="tab" data-tab="marmitex">Gerir marmitex</button></section>
  <div class="metrics"><div>Recebido hoje<b>${EUR(a)}</b></div><div>Despesas hoje<b>${EUR(b)}</b></div><div>Saldo hoje<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paid.length}</b></div>
  ${analyticsPanel()}`;
 }
@@ -377,7 +384,7 @@ function productsPanel(){
   <div class="product-manager-tags">${x.price_cents!==null?'<span class="product-tag">Avulso</span>':''}${x.combo_eligible?'<span class="product-tag combo-tag">Também no combo</span>':''}${!x.active?'<span class="product-tag inactive-tag">Oculto</span>':''}</div></div>
   <button type="button" class="small ghost" data-do="edit-product" data-id="${x.id}">Editar</button></div>`;
  return `<div class="catalog-admin-intro">
-   <div><span class="section-eyebrow">ORGANIZAÇÃO DO CARDÁPIO</span><h2>Produtos individuais</h2><p>Cadastre salgados, bolos, marmitex e bebidas aqui. Nenhum produto novo entra em combos automaticamente.</p></div>
+   <div><span class="section-eyebrow">ORGANIZAÇÃO DO CARDÁPIO</span><h2>Produtos individuais</h2><p>Cadastre salgados, bolos e bebidas do café aqui. Para cadastrar marmitex, utilize a aba Marmitex do Administrador. Nenhum produto novo entra em combos automaticamente.</p></div>
    <div class="catalog-admin-counter"><strong>${S.products.length}</strong><span>produtos cadastrados</span></div>
  </div>
  <div class="main-grid"><section class="panel product-manager-list">
@@ -564,7 +571,7 @@ if(k==='order'||k==='kitchen-start'){
  }
  return;
 }
-if(k==='tab'){S.tab=b.dataset.tab;paint();return;}
+if(k==='tab'){S.tab=b.dataset.tab;if(S.tab==='marmitex')await MX.mxLoad(api,'marmitex-admin');paint();return;}
 if(k==='refresh-stats'){await loadAnalytics(S.month||DAY().slice(0,7));paint();return;}
 if(k==='edit-product'){S.editProduct=id||null;paint();return;}
 if(k==='edit-combo'){S.editCombo=id||null;paint();return;}
@@ -586,7 +593,7 @@ S.editCombo=null;
 await loadCatalog();}
 if(formId==='expenseForm'){let cents=Math.round(Number(d.get('amount'))*100);if(cents<1)throw Error('Valor inválido');let r=await api.from('cafe_expenses').insert({expense_date:d.get('date'),description:String(d.get('description')).trim(),category:String(d.get('category')),amount_cents:cents,created_by:S.user.id});if(r.error)throw r.error;await loadOrders();}
 })().then(()=>{S.notice='Registo guardado com sucesso.';S.busy=false;paint();}).catch(ex=>{S.notice='Erro: '+ex.message;S.busy=false;paint();});});
-async function sync(){try{let r=route();if(r==='cliente')await loadCatalog();else if(r==='pedido')await loadTicket();else if(r==='retirada')await loadReady();else if(['caixa','cozinha','admin'].includes(r)&&S.role)await loadOrders();else if(['marmitex','marmitex-pedido'].includes(r)||(['marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(r)&&allowed(r)))await MX.mxLoad(api,r);paint();}catch(e){S.notice=e.message;paint();}}
+async function sync(){try{let r=route();if(r==='cliente')await loadCatalog();else if(r==='pedido')await loadTicket();else if(r==='retirada')await loadReady();else if(['caixa','cozinha','admin'].includes(r)&&S.role){await loadOrders();if(r==='admin'&&S.tab==='marmitex')await MX.mxLoad(api,'marmitex-admin');}else if(['marmitex','marmitex-pedido'].includes(r)||(['marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(r)&&allowed(r)))await MX.mxLoad(api,r);paint();}catch(e){S.notice=e.message;paint();}}
 function mxLegacyRedirect(){const hash=location.hash.replace('#/marmitex-cozinha','#/marmitex-caixa');location.replace('./marmitex.html'+hash);}
 window.addEventListener('hashchange',()=>{if(route().startsWith('marmitex'))mxLegacyRedirect();else sync();});
 // Ao regressar ao pedido (inclusive após desbloquear o telemóvel), recuperar o estado imediatamente.
