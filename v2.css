@@ -1218,3 +1218,9 @@ footer{border-top:1px solid #6D513259;padding-top:16px;color:#B69C80!important}
  .main-header nav{max-width:calc(100% - 143px)!important;gap:3px!important}
  .main-header nav a{font-size:10px!important;padding:8px 7px!important}
 }
+
+/* Identidade vetorial oficial — ficheiros fornecidos pelo utilizador */
+.main-header .brand{flex:0 0 100px!important;min-width:100px!important;max-width:100px!important;background:#faf6ef;border-radius:14px;padding:5px;overflow:visible!important}
+.main-header .brand-logo{width:90px!important;height:90px!important;max-width:100%!important;object-fit:contain!important;object-position:center!important}
+.hero-brand-icon{background:#faf6ef;padding:9px;border-radius:23px}
+@media(max-width:760px){.main-header .brand{flex:0 0 76px!important;min-width:76px!important;max-width:76px!important;padding:4px}.main-header .brand-logo{width:68px!important;height:68px!important}}
