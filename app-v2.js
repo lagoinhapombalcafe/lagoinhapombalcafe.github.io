@@ -170,21 +170,59 @@ function orderCard(o,actions){
   <div class="align-row"><b>${EUR(o.total_cents)}</b><div>${actions.map(([a,label])=>`<button class="small" data-do="order" data-act="${a}" data-id="${o.id}">${label}</button>`).join(' ')}</div>
  </article>`;
 }
+function kitchenTile(o){
+ const preparing=o.status==='preparing';
+ const name=String(o.customer_name||'').trim()||'Cliente';
+ const lines=o.cafe_order_lines||[];
+ return `<article class="kitchen-ticket ${preparing?'kitchen-preparing':'kitchen-waiting'} ${o.number>=9000?'test-order':''}">
+  <button type="button" class="kitchen-ticket-main" ${preparing?'disabled':''} data-do="kitchen-start" data-id="${E(o.id)}" aria-label="${preparing?'Em preparação':`Iniciar preparação do pedido de ${name}`}">
+    <span class="kitchen-status-indicator"><span class="kitchen-status-dot"></span>${preparing?'EM PREPARAÇÃO':'AGUARDANDO PREPARO'}</span>
+    <h3 class="kitchen-customer">${E(name)}</h3>
+    <span class="kitchen-ref">PEDIDO #${String(o.number).padStart(3,'0')} · ${getDate(o.created_at)} ${o.number>=9000?'· TESTE':''}</span>
+    <div class="kitchen-product-list">
+     ${lines.map(l=>`<div class="kitchen-product-row"><strong>${l.quantity}×</strong><div><span>${E(l.item_name)}</span>${l.detail?`<small>${E(l.detail)}</small>`:''}</div></div>`).join('')||'<span>Itens ainda não disponíveis</span>'}
+    </div>
+    ${preparing?'<span class="kitchen-tile-hint">Pedido em produção</span>':'<span class="kitchen-tile-hint">☝ Toque no cartão para iniciar</span>'}
+  </button>
+  ${preparing
+   ?`<div class="kitchen-ticket-actions"><button type="button" class="kitchen-done-btn" data-do="order" data-act="ready" data-id="${E(o.id)}" ${S.busy?'disabled':''}>✓ Pronto · Avisar cliente</button></div>`
+   :`<div class="kitchen-ticket-actions"><button type="button" class="kitchen-start-btn" data-do="kitchen-start" data-id="${E(o.id)}" ${S.busy?'disabled':''}>Iniciar preparo <span>→</span></button></div>`}
+ </article>`;
+}
+function kitchenBoard(day,paid){
+ const active=day.filter(o=>o.payment_status==='paid'&&['queued','preparing'].includes(o.status));
+ const queued=active.filter(o=>o.status==='queued').sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+ const preparing=active.filter(o=>o.status==='preparing').sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+ const ready=day.filter(o=>o.status==='ready');
+ return `<section class="kitchen-workspace">
+  <div class="kitchen-topline"><div><span class="section-eyebrow">LAGOINHA CAFÉ · PAINEL DA COZINHA</span><h1>Pedidos em andamento</h1><p>Toque no pedido para iniciar. Quando terminar, marque <strong>Pronto</strong> — ele sai da fila e o cliente vê o aviso.</p></div>
+   <button type="button" class="kitchen-refresh-btn" data-do="refresh">↻ Atualizar</button></div>
+  <div class="kitchen-counters">
+   <div class="kitchen-counter waiting"><span>🟠 Aguardando</span><strong>${queued.length}</strong></div>
+   <div class="kitchen-counter preparing"><span>🔵 Em preparação</span><strong>${preparing.length}</strong></div>
+   <div class="kitchen-counter ready"><span>🟢 Prontos</span><strong>${ready.length}</strong></div>
+  </div>
+  <div class="kitchen-board-heading"><h2>Em preparação <small>${preparing.length}</small></h2></div>
+  <div class="kitchen-ticket-grid">
+   ${preparing.length?preparing.map(kitchenTile).join(''):'<div class="kitchen-empty">Ainda não há pedidos em preparação. Toque num pedido laranja para começar.</div>'}
+  </div>
+  <div class="kitchen-board-heading"><h2>Aguardando preparo <small>${queued.length}</small></h2></div>
+  <div class="kitchen-ticket-grid">
+   ${queued.length?queued.map(kitchenTile).join(''):'<div class="kitchen-empty">Nenhum pedido à espera. Os novos pedidos pagos aparecem aqui.</div>'}
+  </div>
+  <div class="kitchen-board-foot"><span>✓ Cada pedido é independente. Pode preparar 2, 3 ou mais em simultâneo.</span><a href="#/retirada">Ecrã de retirada</a></div>
+ </section>`;
+}
 function queue(who){
  const day=S.orders.filter(o=>o.order_day===DAY());
- const pending=day.filter(o=>o.payment_status==='pending'&&o.status==='awaiting_payment');
  const paid=day.filter(o=>o.payment_status==='paid');
- const preparing=day.filter(o=>o.payment_status==='paid'&&['queued','preparing'].includes(o.status));
- const isCash=who==='caixa';
- const cards=isCash
-  ? pending.map(o=>orderCard(o,o.number>=9000?[['paid','Simular pagamento']]:[['paid','Confirmar pagamento'],['cancel','Cancelar']]))
-  : preparing.map(o=>orderCard(o,o.status==='queued'?[['preparing','Iniciar preparo'],['ready','Pronto']]:[['ready','Finalizar · Pronto']]));
- return header(isCash?'Caixa':'Cozinha',
-   isCash?'Confirme os pagamentos. Depois, a cozinha assume o pedido.':'Ao marcar Pronto, o pedido é finalizado na cozinha e o cliente já pode levantar.')+
-   `<div class="metrics"><div>Aguardam pagamento<b>${pending.length}</b></div><div>Pedidos pagos<b>${paid.length}</b></div><div>Total recebido<b>${EUR(paid.filter(o=>o.number<9000).reduce((x,o)=>x+o.total_cents,0))}</b></div></div>`+
-   `<div class="panel"><div class="panel-head"><h2>${isCash?'Aguardam pagamento':'Pedidos em preparação'}</h2><button class="small ghost" data-do="refresh">Atualizar ↻</button></div><div class="orders">${cards.join('')||'<p class="muted">Nenhum pedido nesta fila.</p>'}</div></div>`+
-   (!isCash?'<p class="muted">Depois de marcar Pronto, o pedido sai desta fila e aparece no ecrã de retirada. Não há mais nenhuma ação para a equipa.</p>':'')+
-   `<p><a href="#/retirada">Abrir ecrã de clientes prontos ↗</a></p>`;
+ if(who==='cozinha')return kitchenBoard(day,paid);
+ const pending=day.filter(o=>o.payment_status==='pending'&&o.status==='awaiting_payment').sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+ const cards=pending.map(o=>orderCard(o,o.number>=9000?[['paid','Simular pagamento']]:[['paid','Confirmar pagamento'],['cancel','Cancelar']]));
+ return header('Caixa','Confirme os pagamentos. Cada pedido pago vai diretamente para os tablets da cozinha.')+
+  `<div class="metrics"><div>Aguardam pagamento<b>${pending.length}</b></div><div>Pedidos pagos<b>${paid.length}</b></div><div>Total recebido<b>${EUR(paid.filter(o=>o.number<9000).reduce((x,o)=>x+o.total_cents,0))}</b></div></div>`+
+  `<div class="panel cashier-tablet"><div class="panel-head"><h2>Pedidos a receber</h2><button class="small ghost" data-do="refresh">Atualizar ↻</button></div><div class="orders cashier-card-grid">${cards.join('')||'<p class="muted">Nenhum pedido a aguardar pagamento.</p>'}</div></div>`+
+  '<p class="muted">Depois de confirmar o pagamento, o pedido sai do Caixa. A Cozinha trata da preparação e finaliza em <strong>Pronto</strong>.</p>';
 }
 function analyticsPanel(){
  const month=S.month||DAY().slice(0,7);
@@ -456,7 +494,26 @@ if(k==='send'){
 }
 if(k==='refresh'){await sync();return;}
 if(k==='logout'){await api.auth.signOut();S.user=null;S.role=null;location.hash='#/cliente';paint();return;}
-if(k==='order'){let a=b.dataset.act;if(a==='paid'&&!confirm(S.orders.find(o=>o.id===id)?.number>=9000?'Simular a confirmação de pagamento deste pedido de TESTE? Não receba dinheiro.':'Confirmar que recebeu o pagamento presencial?'))return;if(a==='cancel'&&!confirm('Cancelar pedido não pago e devolver os itens ao estoque?'))return;let r=await api.rpc('staff_order_action',{p_order_id:id,p_action:a});if(r.error)throw r.error;await Promise.all([loadOrders(),loadCatalog()]);paint();return;}
+if(k==='order'||k==='kitchen-start'){
+ const action=k==='kitchen-start'?'preparing':b.dataset.act;
+ if(action==='paid'&&!confirm(S.orders.find(o=>o.id===id)?.number>=9000?'Simular a confirmação de pagamento deste pedido de TESTE? Não receba dinheiro.':'Confirmar que recebeu o pagamento presencial?'))return;
+ if(action==='cancel'&&!confirm('Cancelar pedido não pago e devolver os itens ao estoque?'))return;
+ S.busy=true;
+ try{
+   const r=await api.rpc('staff_order_action',{p_order_id:id,p_action:action});
+   if(r.error)throw r.error;
+   S.notice='';
+   if(action==='paid'||action==='cancel')await Promise.all([loadOrders(),loadCatalog()]);
+   else await loadOrders();
+ }catch(error){
+   S.notice='Erro ao atualizar o pedido: '+(error.message||error);
+   try{await loadOrders();}catch(_){}
+ }finally{
+   S.busy=false;
+   paint();
+ }
+ return;
+}
 if(k==='tab'){S.tab=b.dataset.tab;paint();return;}
 if(k==='refresh-stats'){await loadAnalytics(S.month||DAY().slice(0,7));paint();return;}
 if(k==='edit-product'){S.editProduct=id||null;paint();return;}
@@ -490,5 +547,5 @@ setInterval(()=>{
   if(['caixa','cozinha','admin'].includes(r)&&!allowed(r))return;
   if(document.getElementById('login')||S.checkoutOpen)return;
   if(['caixa','cozinha','retirada','pedido','cliente'].includes(r))sync();
-},12500);
+},5000);
 (async()=>{try{let m=await import('https://esm.sh/@supabase/supabase-js@2.95.0');api=m.createClient(CONFIG.supabaseUrl,CONFIG.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true}});await Promise.all([loadCatalog(),auth()]);if(['caixa','cozinha','admin'].includes(route())&&S.role)await loadOrders();if(route()==='pedido')await loadTicket();if(route()==='retirada')await loadReady();paint();if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});}catch(e){root.innerHTML='<main class="wrap"><h1>Falha ao carregar o sistema</h1><p>'+E(e.message)+'</p></main>';}})();
