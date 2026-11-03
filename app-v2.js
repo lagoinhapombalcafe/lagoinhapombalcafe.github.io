@@ -14,7 +14,7 @@ const getDate=x=>new Date(x).toLocaleTimeString('pt-PT',{timeZone:'Europe/Lisbon
 const states={awaiting_payment:'Aguarda pagamento',queued:'Na fila',preparing:'Em preparação',ready:'Pronto',delivered:'Entregue',cancelled:'Cancelado'};
 const alert=()=>S.notice?`<p class="alert">${E(S.notice)} <button class="small" data-do="dismiss">×</button></p>`:'';
 const header=(title,sub)=>`<section class="hero"><div><span class="eyebrow">LAGOINHA POMBAL · DOMINGOS 9H–10H</span><h1>${title}</h1><p>${sub}</p></div><img src="./assets/icon.svg" class="hero-brand-icon" alt="" aria-hidden="true"></section>`;
-const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente" aria-label="Lagoinha Café Pombal — ir para o cardápio"><img class="brand-logo" src="./assets/logo-aprovada.webp" alt="Lagoinha Pombal Café" width="190" height="56" decoding="async"></a><nav aria-label="Navegação principal"><a href="#/cliente" class="nav-main-link">Cliente</a><a href="#/marmitex" class="nav-mx-link">Marmitex</a><a href="#/equipa" class="nav-main-link">Equipa</a>${S.role==="admin"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a><a class="nav-staff-direct" href="#/cozinha">Cozinha</a><a class="nav-staff-direct" href="#/admin">Administrador</a>`:S.role==="cashier"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a class="nav-staff-direct" href="#/cozinha">Cozinha</a>`:''}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Pombal · Rua Prof. Veiga Simão, nº 4 · Pedidos presenciais</footer>`;
+const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente" aria-label="Lagoinha Café Pombal — ir para o cardápio"><img class="brand-logo" src="./assets/logo-aprovada.webp" alt="Lagoinha Pombal Café" width="190" height="56" decoding="async"></a><nav aria-label="Navegação principal"><a href="#/cliente" class="nav-main-link">Cliente</a><a href="#/equipa" class="nav-main-link">Equipa</a>${S.role==="admin"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a><a class="nav-staff-direct" href="#/cozinha">Cozinha</a><a class="nav-staff-direct" href="#/admin">Administrador</a>`:S.role==="cashier"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a class="nav-staff-direct" href="#/cozinha">Cozinha</a>`:''}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Pombal · Rua Prof. Veiga Simão, nº 4 · Pedidos presenciais</footer>`;
 function paint(){let r=route(),body;
 if(['marmitex','marmitex-pedido','marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(r))body=['marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(r)&&!allowed(r)?login(r):MX.mxRender(r,S.role);
 else if(r==='cliente')body=menu();
@@ -123,7 +123,6 @@ function menu(){
       <span class="hero-photo-motto">CAFÉ · COMUNHÃO · ACOLHIMENTO</span>
     </div>
   </section>
-  <a href="#/marmitex" class="mx-home-cta"><span class="mx-home-symbol">🍱</span><span><strong>Marmitex para domingo</strong><small>Encomende durante a semana e retire na igreja</small></span><span class="mx-home-arrow">→</span></a>
   ${!S.settings.orders_open?'<div class="closed"><strong>Atendimento temporariamente fechado</strong><span>Você pode conhecer o cardápio. Os pedidos serão liberados pela equipa do café.</span></div>':''}
   <div class="menu-intro"><span class="section-eyebrow">☕ FEITO PARA O SEU DOMINGO</span><h2>O que vai pedir hoje?</h2><p>Combine um combo com outros produtos. Tudo fica no mesmo pedido.</p></div>
   <section class="menu-split">
@@ -190,7 +189,7 @@ function staffHub(){
     <p>${t.subtitle}</p>
     <span class="staff-entry-action">${S.role&&t.roles.includes(S.role)?'Abrir painel':'Entrar'} <span aria-hidden="true">→</span></span>
    </a>`).join('')}</section>
-  <p class="staff-entry-help">Cada área é protegida por login. Para os tablets da cozinha, escolha <strong>Cozinha</strong>; para receber pagamentos, escolha <strong>Caixa</strong>.</p><section class="mx-staff-quick"><h2>🍱 Encomendas de Marmitex</h2><p>Gestão separada das refeições para domingo.</p><div><a href="#/marmitex-caixa">Caixa das marmitex</a><a href="#/marmitex-cozinha">Cozinha das marmitex</a><a href="#/marmitex-admin">Gerir cardápio semanal</a></div></section>`;
+  <p class="staff-entry-help">Cada área é protegida por login. Para os tablets da cozinha, escolha <strong>Cozinha</strong>; para receber pagamentos, escolha <strong>Caixa</strong>.</p>`;
 }
 function login(r){return header('Área da equipa','Acesso protegido para caixa, cozinha e administração.')+`<section class="panel login"><h2>${E({caixa:'Caixa',cozinha:'Cozinha',admin:'Administrador','marmitex-caixa':'Caixa das Marmitex','marmitex-cozinha':'Cozinha das Marmitex','marmitex-admin':'Gestão das Marmitex'}[r]||'Equipa')}</h2>${S.user?`<p>A conta ${E(S.user.email)} ainda não está autorizada nesta área.</p><button data-do="logout">Sair da conta</button>`:`<form id="login" class="form-grid"><label>Email<input type="email" name="email" required autocomplete="username" value="${E(S.loginEmail)}"></label><label>Palavra-passe<input type="password" name="password" required autocomplete="current-password"></label><button>Entrar</button></form>`}<p class="muted">Apenas contas criadas e autorizadas no Supabase têm acesso à equipa.</p></section>`;}
 function orderCard(o,actions){
@@ -253,10 +252,10 @@ function kitchenBoard(day,paid){
 function queue(who){
  const day=S.orders.filter(o=>o.order_day===DAY());
  const paid=day.filter(o=>o.payment_status==='paid');
- if(who==='cozinha')return '<div class="mx-team-link"><a href="#/marmitex-cozinha">🍱 Abrir painel das marmitex de domingo →</a></div>'+kitchenBoard(day,paid);
+ if(who==='cozinha')return kitchenBoard(day,paid);
  const pending=day.filter(o=>o.payment_status==='pending'&&o.status==='awaiting_payment').sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
  const cards=pending.map(o=>orderCard(o,o.number>=9000?[['paid','Simular pagamento']]:[['paid','Confirmar pagamento'],['cancel','Cancelar']]));
- return header('Caixa','Confirme os pagamentos. Cada pedido pago vai diretamente para os tablets da cozinha.')+'<div class="mx-team-link"><a href="#/marmitex-caixa">🍱 Abrir caixa das marmitex de domingo →</a></div>'+
+ return header('Caixa','Confirme os pagamentos. Cada pedido pago vai diretamente para os tablets da cozinha.')+
   `<div class="metrics"><div>Aguardam pagamento<b>${pending.length}</b></div><div>Pedidos pagos<b>${paid.length}</b></div><div>Total recebido<b>${EUR(paid.filter(o=>o.number<9000).reduce((x,o)=>x+o.total_cents,0))}</b></div></div>`+
   `<div class="panel cashier-tablet"><div class="panel-head"><h2>Pedidos a receber</h2><button class="small ghost" data-do="refresh">Atualizar ↻</button></div><div class="orders cashier-card-grid">${cards.join('')||'<p class="muted">Nenhum pedido a aguardar pagamento.</p>'}</div></div>`+
   '<p class="muted">Depois de confirmar o pagamento, o pedido sai do Caixa. A Cozinha trata da preparação e finaliza em <strong>Pronto</strong>.</p>';
@@ -324,7 +323,7 @@ function analyticsPanel(){
    <div class="analytics-foot"><small>Os pedidos de teste não entram nos gráficos. Os valores representam pagamentos confirmados, antes de descontar despesas.</small><button class="small ghost" data-do="refresh-stats">Atualizar gráficos ↻</button></div>
  </section>`;
 }
-function admin(){let opts=[['visao','Resumo'],['estatisticas','Gráficos'],['produtos','Individuais'],['combos','Combos'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+'<div class="mx-team-link"><a href="#/marmitex-admin">🍱 Gerir encomendas de marmitex para domingo →</a></div>'+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='estatisticas'?analyticsPanel():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():qr()}`;}
+function admin(){let opts=[['visao','Resumo'],['estatisticas','Gráficos'],['produtos','Individuais'],['combos','Combos'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='estatisticas'?analyticsPanel():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():qr()}`;}
 function overview(){
  const paid=S.orders.filter(o=>o.order_day===DAY()&&o.payment_status==='paid'&&o.number<9000);
  const ex=S.expenses.filter(x=>x.expense_date===DAY());
@@ -588,7 +587,8 @@ await loadCatalog();}
 if(formId==='expenseForm'){let cents=Math.round(Number(d.get('amount'))*100);if(cents<1)throw Error('Valor inválido');let r=await api.from('cafe_expenses').insert({expense_date:d.get('date'),description:String(d.get('description')).trim(),category:String(d.get('category')),amount_cents:cents,created_by:S.user.id});if(r.error)throw r.error;await loadOrders();}
 })().then(()=>{S.notice='Registo guardado com sucesso.';S.busy=false;paint();}).catch(ex=>{S.notice='Erro: '+ex.message;S.busy=false;paint();});});
 async function sync(){try{let r=route();if(r==='cliente')await loadCatalog();else if(r==='pedido')await loadTicket();else if(r==='retirada')await loadReady();else if(['caixa','cozinha','admin'].includes(r)&&S.role)await loadOrders();else if(['marmitex','marmitex-pedido'].includes(r)||(['marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(r)&&allowed(r)))await MX.mxLoad(api,r);paint();}catch(e){S.notice=e.message;paint();}}
-window.addEventListener('hashchange',sync);
+function mxLegacyRedirect(){const hash=location.hash.replace('#/marmitex-cozinha','#/marmitex-caixa');location.replace('./marmitex.html'+hash);}
+window.addEventListener('hashchange',()=>{if(route().startsWith('marmitex'))mxLegacyRedirect();else sync();});
 // Ao regressar ao pedido (inclusive após desbloquear o telemóvel), recuperar o estado imediatamente.
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!S.busy&&['pedido','retirada','marmitex-pedido'].includes(route()))sync();});
 // Não redesenhar o formulário durante a digitação: a sincronização periódica só se aplica às áreas autorizadas.
@@ -599,4 +599,4 @@ setInterval(()=>{
   if(document.getElementById('login')||S.checkoutOpen)return;
   if(['caixa','cozinha','retirada','pedido','cliente','marmitex-pedido','marmitex-caixa','marmitex-cozinha'].includes(r))sync();
 },5000);
-(async()=>{try{let m=await import('https://esm.sh/@supabase/supabase-js@2.95.0');api=m.createClient(CONFIG.supabaseUrl,CONFIG.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true}});await Promise.all([loadCatalog(),auth()]);if(['caixa','cozinha','admin'].includes(route())&&S.role)await loadOrders();if(route()==='pedido')await loadTicket();if(route()==='retirada')await loadReady();if(['marmitex','marmitex-pedido'].includes(route())||(['marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(route())&&allowed(route())))await MX.mxLoad(api,route());paint();if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});}catch(e){root.innerHTML='<main class="wrap"><h1>Falha ao carregar o sistema</h1><p>'+E(e.message)+'</p></main>';}})();
+(async()=>{if(route().startsWith('marmitex')){mxLegacyRedirect();return;}try{let m=await import('https://esm.sh/@supabase/supabase-js@2.95.0');api=m.createClient(CONFIG.supabaseUrl,CONFIG.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true}});await Promise.all([loadCatalog(),auth()]);if(['caixa','cozinha','admin'].includes(route())&&S.role)await loadOrders();if(route()==='pedido')await loadTicket();if(route()==='retirada')await loadReady();if(['marmitex','marmitex-pedido'].includes(route())||(['marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(route())&&allowed(route())))await MX.mxLoad(api,route());paint();if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});}catch(e){root.innerHTML='<main class="wrap"><h1>Falha ao carregar o sistema</h1><p>'+E(e.message)+'</p></main>';}})();
