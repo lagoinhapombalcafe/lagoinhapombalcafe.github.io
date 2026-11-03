@@ -1,11 +1,18 @@
 {
-  "name": "Lagoinha Café — Pedidos",
+  "name": "Lagoinha Café Pombal — Pedidos",
   "short_name": "Lagoinha Café",
-  "description": "Pedidos pelo QR Code com levantamento no balcão",
+  "description": "Lagoinha Café Pombal: faça o seu pedido, pague no balcão e acompanhe a retirada",
   "start_url": "./#/cliente",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#101011",
-  "theme_color": "#101011",
-  "icons": [{"src":"./assets/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+  "background_color": "#130F0D",
+  "theme_color": "#130F0D",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
