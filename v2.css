@@ -1286,3 +1286,42 @@ footer{border-top:1px solid #6D513259;padding-top:16px;color:#B69C80!important}
   .main-header .brand .brand-logo{width:94px!important;height:76px!important;max-width:none!important}
   .main-header nav{max-width:calc(100% - 102px)!important}
 }
+
+
+/* Lagoinha Café 4.6 — Marmitex integrada ao Administrador, preservando o portal separado */
+.admin-marmitex-quick{
+ display:flex;align-items:center;justify-content:space-between;gap:18px;
+ padding:19px 23px;margin:0 0 22px;border:1px solid #AB7B45;border-radius:18px;
+ background:linear-gradient(115deg,#342318,#201713 70%,#3B2819);box-shadow:0 8px 23px #0004;
+}
+.admin-marmitex-quick strong{display:block;color:#F8DEB7;font-size:18px}
+.admin-marmitex-quick p{font-size:13px;line-height:1.5;color:#D8BFA2;margin:5px 0 0}
+.admin-marmitex-quick button{
+ flex-shrink:0;color:#211408;background:linear-gradient(120deg,#EFC686,#D5A25D);
+ border:1px solid #F2CC8D;white-space:nowrap
+}
+.admin-marmitex-intro{
+ display:flex;align-items:center;justify-content:space-between;gap:16px;
+ padding:18px 22px;margin:0 0 18px;border:1px solid #84603A;border-radius:16px;
+ background:#231A14;color:#F7E3C7;
+}
+.admin-marmitex-intro strong{font-size:19px}
+.admin-marmitex-intro p{max-width:710px;font-size:13px;color:#D6BE9D;margin:5px 0 0;line-height:1.5}
+.admin-marmitex-intro a{
+ display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+ padding:12px 15px;border:1px solid #C2945B;border-radius:11px;
+ background:#47321F;color:#FFE4B9;text-decoration:none;font-size:13px;font-weight:800
+}
+.admin-marmitex .mx-staff-nav{display:none!important}
+.admin-marmitex .mx-hero{margin-top:0}
+.admin-marmitex .mx-qr-admin{display:flex;justify-content:center;margin:12px 0 22px}
+.admin-marmitex .mx-qr-admin a{
+ display:inline-flex;align-items:center;padding:12px 18px;border:1px solid #C79557;
+ background:#402B1C;color:#F7D3A2;border-radius:10px;text-decoration:none;font-size:13px;font-weight:800
+}
+.admin-marmitex .mx-admin-grid{min-width:0}
+.admin-marmitex .mx-field input,.admin-marmitex .mx-field select{max-width:100%;min-width:0}
+@media(max-width:640px){
+ .admin-marmitex-quick,.admin-marmitex-intro{flex-direction:column;align-items:stretch;padding:15px 17px}
+ .admin-marmitex-quick button,.admin-marmitex-intro a{width:100%;text-align:center}
+}
