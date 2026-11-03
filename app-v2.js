@@ -13,7 +13,7 @@ const getDate=x=>new Date(x).toLocaleTimeString('pt-PT',{timeZone:'Europe/Lisbon
 const states={awaiting_payment:'Aguarda pagamento',queued:'Na fila',preparing:'Em preparação',ready:'Pronto',delivered:'Entregue',cancelled:'Cancelado'};
 const alert=()=>S.notice?`<p class="alert">${E(S.notice)} <button class="small" data-do="dismiss">×</button></p>`:'';
 const header=(title,sub)=>`<section class="hero"><div><span class="eyebrow">LAGOINHA POMBAL · DOMINGOS 9H–10H</span><h1>${title}</h1><p>${sub}</p></div><img src="./assets/icon.svg" class="hero-brand-icon" alt="" aria-hidden="true"></section>`;
-const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente" aria-label="Lagoinha Café Pombal — ir para o cardápio"><img class="brand-logo" src="./assets/logo-cabecalho.svg" alt="Lagoinha Pombal Café" width="185" height="49"></a><nav aria-label="Navegação principal"><a href="#/cliente" class="nav-main-link">Cliente</a><a href="#/equipa" class="nav-main-link">Equipa</a>${S.role==="admin"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a><a class="nav-staff-direct" href="#/cozinha">Cozinha</a><a class="nav-staff-direct" href="#/admin">Administrador</a>`:S.role==="cashier"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a class="nav-staff-direct" href="#/cozinha">Cozinha</a>`:''}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Pombal · Rua Prof. Veiga Simão, nº 4 · Pedidos presenciais</footer>`;
+const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente" aria-label="Lagoinha Café Pombal — ir para o cardápio"><img class="brand-logo" src="./assets/logo-aprovada.webp" alt="Lagoinha Pombal Café" width="190" height="56" decoding="async"></a><nav aria-label="Navegação principal"><a href="#/cliente" class="nav-main-link">Cliente</a><a href="#/equipa" class="nav-main-link">Equipa</a>${S.role==="admin"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a><a class="nav-staff-direct" href="#/cozinha">Cozinha</a><a class="nav-staff-direct" href="#/admin">Administrador</a>`:S.role==="cashier"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a class="nav-staff-direct" href="#/cozinha">Cozinha</a>`:''}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Pombal · Rua Prof. Veiga Simão, nº 4 · Pedidos presenciais</footer>`;
 function paint(){let r=route(),body;
 if(r==='cliente')body=menu();
 else if(r==='equipa')body=staffHub();
@@ -168,7 +168,7 @@ function ticket(){
  </div>`;
 }
 function pickup(){
- return `<div class="pickup"><header class="pickup-branded-header"><img src="./assets/logo-cafe.svg" alt="Lagoinha Café Pombal"></header>
+ return `<div class="pickup"><header class="pickup-branded-header"><img src="./assets/logo-aprovada.webp" alt="Lagoinha Café Pombal"></header>
  <h1>PEDIDOS PRONTOS</h1>
  <section>${S.ready.length?S.ready.map(x=>`<b class="pickup-name">${E(x.customer_name||'Cliente')}<small class="pickup-ref">REF. ${String(x.number).padStart(3,'0')}</small></b>`).join(''):'<p>Aguardando os próximos pedidos.</p>'}</section>
  <p>Quando vir o seu nome, dirija-se ao balcão de retirada.</p>
