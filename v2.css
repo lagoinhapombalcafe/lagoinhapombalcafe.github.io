@@ -352,3 +352,67 @@ button.ghost:hover:not(:disabled){background:#484037}
 .combo-eligible-summary{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px;margin-bottom:12px}
 .combo-eligible-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #997444;border-radius:999px;background:#453421;color:#f1d7af;font-size:12px;font-weight:750;padding:8px 12px}
 .combo-eligible-pill .product-svg{width:22px;height:22px}
+
+
+/* Lagoinha Café 3.11 — fila operacional touch para tablets */
+.kitchen-workspace{display:grid;gap:20px;color:#f9efe2}
+.kitchen-topline{background:linear-gradient(135deg,#3d3023,#1a1919);border:1px solid #84613d;border-radius:22px;padding:25px 27px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.kitchen-topline h1{font-family:Georgia,'Times New Roman',serif;font-size:clamp(29px,4vw,43px);margin:7px 0;color:#f6dab0}
+.kitchen-topline p{font-size:14px;line-height:1.55;color:#d4c1ad;max-width:690px;margin:10px 0 0}
+.kitchen-topline p strong{color:#f4d6aa}
+.kitchen-refresh-btn{background:#30291f;border:1px solid #a07b4c;color:#f3d2a2;padding:14px 18px;flex-shrink:0;min-height:53px;min-width:130px}
+.kitchen-counters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.kitchen-counter{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 22px;border-radius:17px;border:1px solid #5a514a;min-width:0}
+.kitchen-counter span{font-size:13px;font-weight:850}
+.kitchen-counter strong{font-size:32px;font-weight:900;line-height:1}
+.kitchen-counter.waiting{background:#4b3523;border-color:#91613d;color:#ffe0b7}
+.kitchen-counter.preparing{background:#1b3d52;border-color:#417898;color:#d8edff}
+.kitchen-counter.ready{background:#224735;border-color:#39785b;color:#d5f7de}
+.kitchen-board-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 4px 0;border-bottom:1px solid #504537}
+.kitchen-board-heading h2{font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#efddc3;padding-bottom:9px}
+.kitchen-board-heading small{display:inline-flex;margin-left:9px;background:#3d3228;padding:4px 10px;border:1px solid #735638;border-radius:99px;color:#e3c59e;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;vertical-align:middle}
+.kitchen-ticket-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;align-items:stretch}
+.kitchen-ticket{min-width:0;display:flex;flex-direction:column;border-radius:20px;overflow:hidden;border:2px solid;box-shadow:0 12px 24px #0005;transition:border-color .2s,background .2s}
+.kitchen-ticket.kitchen-waiting{background:linear-gradient(140deg,#573a21,#34271e);border-color:#c18c51}
+.kitchen-ticket.kitchen-preparing{background:linear-gradient(145deg,#224a63,#152f40);border-color:#58a2d4}
+.kitchen-ticket-main{display:flex;flex-direction:column;align-items:stretch;gap:10px;text-align:left;background:transparent!important;color:#fff;border:0;padding:21px 19px 12px;flex:1;width:100%;min-height:265px;border-radius:0;cursor:pointer}
+.kitchen-ticket-main:disabled{opacity:1;cursor:default;filter:none}
+.kitchen-ticket-main:hover:not(:disabled){background:#ffffff0a!important;filter:none}
+.kitchen-status-indicator{display:flex;align-items:center;gap:9px;font-weight:900;letter-spacing:1.2px;font-size:10px}
+.kitchen-waiting .kitchen-status-indicator{color:#ffe0b0}
+.kitchen-preparing .kitchen-status-indicator{color:#bfebff}
+.kitchen-status-dot{width:10px;height:10px;flex-shrink:0;border-radius:50%;background:currentColor;box-shadow:0 0 0 5px #ffffff18}
+.kitchen-customer{font-size:clamp(21px,2.7vw,30px);font-family:Georgia,'Times New Roman',serif;color:#fff7ec;line-height:1.16;overflow-wrap:anywhere;margin:4px 0 0}
+.kitchen-ref{color:#dcc7a6;font-size:11px;font-weight:850;letter-spacing:.6px}
+.kitchen-preparing .kitchen-ref{color:#c7dfea}
+.kitchen-product-list{display:grid;align-content:start;gap:9px;flex:1;border-top:1px solid #ffffff43;margin-top:4px;padding-top:13px}
+.kitchen-product-row{display:flex;align-items:start;gap:9px;line-height:1.32;font-size:14px;color:#fff8ef}
+.kitchen-product-row>strong{display:flex;justify-content:center;align-items:center;min-width:33px;min-height:29px;border-radius:8px;background:#f5dbb9;color:#4a2f18;font-size:13px;font-weight:900}
+.kitchen-preparing .kitchen-product-row>strong{background:#d4ecfa;color:#14354a}
+.kitchen-product-row>div{display:flex;flex-direction:column;gap:4px;padding-top:4px;overflow-wrap:anywhere;min-width:0}
+.kitchen-product-row small{color:#e6cbb0;font-size:11px}
+.kitchen-preparing .kitchen-product-row small{color:#c1d9e9}
+.kitchen-tile-hint{display:block;font-size:12px;font-weight:800;color:#f7d5a8;text-align:center;padding:10px 0 3px}
+.kitchen-preparing .kitchen-tile-hint{color:#b7e6ff}
+.kitchen-ticket-actions{padding:0 14px 15px}
+.kitchen-ticket-actions button{width:100%;min-height:62px;padding:12px 10px;font-size:17px;line-height:1.25;border-radius:13px;touch-action:manipulation;box-shadow:0 3px 7px #0005}
+.kitchen-start-btn{background:#eab978;color:#2a190d}
+.kitchen-done-btn{background:#44b67a;color:#10271b}
+.kitchen-done-btn:hover:not(:disabled){background:#60d995}
+.kitchen-ticket-actions button:disabled{opacity:.55;cursor:progress}
+.kitchen-empty{grid-column:1/-1;background:#232120;color:#ad9e8b;border:1px dashed #5f5140;border-radius:16px;text-align:center;padding:34px 18px;font-size:14px}
+.kitchen-board-foot{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-top:1px solid #65513b;padding:18px 7px;color:#d9c3a3;font-size:12px}
+.kitchen-board-foot a{color:#f1cf9d;font-weight:850;text-decoration:underline;text-underline-offset:3px}
+.cashier-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:14px}
+.cashier-card-grid .order{margin:0;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+.cashier-card-grid .order .align-row{flex-wrap:wrap;gap:12px}
+.cashier-card-grid .order .align-row button{min-height:53px;padding:11px 16px;font-size:14px}
+.cashier-card-grid .order .align-row>div{display:flex;gap:8px;flex-wrap:wrap}
+.customer-ready-alert{border:2px solid #4cad69;background:linear-gradient(125deg,#174b2f,#247045);border-radius:17px;color:#ecfff1;padding:19px;margin:18px 0;display:grid;gap:8px;box-shadow:0 12px 23px #1a6d3f30}
+.customer-ready-alert strong{font-size:clamp(20px,4vw,29px);line-height:1.25}
+.customer-ready-alert span{font-size:14px;color:#daf6e5}
+@media(min-width:1450px){body:has(.kitchen-workspace) .wrap{width:min(1400px,calc(100% - 54px))}}
+@media(max-width:1020px){.kitchen-ticket-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kitchen-topline{padding:22px}.kitchen-ticket-main{min-height:260px}}
+@media(max-width:700px){.kitchen-topline{flex-direction:column;align-items:stretch}.kitchen-counters{gap:8px}.kitchen-counter{padding:13px 11px;flex-direction:column;align-items:start}.kitchen-counter strong{font-size:26px}.kitchen-counter span{font-size:11px}.cashier-card-grid{grid-template-columns:1fr}}
+@media(max-width:590px){.kitchen-ticket-grid{grid-template-columns:1fr}.kitchen-ticket-main{min-height:215px}.kitchen-topline{padding:20px}.kitchen-topline h1{font-size:29px}.kitchen-board-heading h2{font-size:22px}.kitchen-ticket-actions button{min-height:56px}}
+@media(prefers-reduced-motion:reduce){.kitchen-ticket{transition:none}}
