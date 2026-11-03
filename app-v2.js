@@ -5,7 +5,7 @@ let api;
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const EUR=n=>(Number(n||0)/100).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
 const DAY=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Lisbon',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-const route=()=>{let p=(location.hash||'#/cliente').split('/')[1];return ({menu:'cliente',staff:'caixa'})[p]||p||'cliente'};
+const route=()=>{let p=(location.hash||'#/cliente').split('/')[1];return ({menu:'cliente',staff:'equipa',team:'equipa'})[p]||p||'cliente'};
 const allowed=r=>S.role==='admin'||(r==='caixa'&&S.role==='cashier')||(r==='cozinha'&&S.role==='kitchen');
 const product=id=>S.products.find(x=>x.id===id),combo=id=>S.combos.find(x=>x.id===id);
 const valid=x=>x&&x.active&&(x.stock_qty===null||x.stock_qty>0);
@@ -13,9 +13,10 @@ const getDate=x=>new Date(x).toLocaleTimeString('pt-PT',{timeZone:'Europe/Lisbon
 const states={awaiting_payment:'Aguarda pagamento',queued:'Na fila',preparing:'Em preparação',ready:'Pronto',delivered:'Entregue',cancelled:'Cancelado'};
 const alert=()=>S.notice?`<p class="alert">${E(S.notice)} <button class="small" data-do="dismiss">×</button></p>`:'';
 const header=(title,sub)=>`<section class="hero"><div><span class="eyebrow">LAGOINHA POMBAL · DOMINGOS 9H–10H</span><h1>${title}</h1><p>${sub}</p></div><span class="cup">☕</span></section>`;
-const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente">☕ <strong>LAGOINHA <em>CAFÉ</em></strong></a><nav><a href="#/cliente">Cliente</a>${S.role==="admin"?`<a href="#/caixa">Caixa</a><a href="#/cozinha">Cozinha</a><a href="#/admin">Administrador</a>`:S.role==="cashier"?`<a href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a href="#/cozinha">Cozinha</a>`:`<a href="#/caixa">Equipa</a>`}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Pombal · Rua Prof. Veiga Simão, nº 4 · Pedidos presenciais</footer>`;
+const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente">☕ <strong>LAGOINHA <em>CAFÉ</em></strong></a><nav><a href="#/cliente">Cliente</a><a href="#/equipa">Equipa</a>${S.role==="admin"?`<a href="#/caixa">Caixa</a><a href="#/cozinha">Cozinha</a><a href="#/admin">Administrador</a>`:S.role==="cashier"?`<a href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a href="#/cozinha">Cozinha</a>`:''}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Pombal · Rua Prof. Veiga Simão, nº 4 · Pedidos presenciais</footer>`;
 function paint(){let r=route(),body;
 if(r==='cliente')body=menu();
+else if(r==='equipa')body=staffHub();
 else if(r==='pedido')body=ticket();
 else if(r==='retirada')return root.innerHTML=pickup();
 else if(r==='qr')body=qr();
@@ -168,6 +169,21 @@ function pickup(){
  <section>${S.ready.length?S.ready.map(x=>`<b class="pickup-name">${E(x.customer_name||'Cliente')}<small class="pickup-ref">REF. ${String(x.number).padStart(3,'0')}</small></b>`).join(''):'<p>Aguardando os próximos pedidos.</p>'}</section>
  <p>Quando vir o seu nome, dirija-se ao balcão de retirada.</p>
  <a href="#/cliente">Voltar ao cardápio</a></div>`;
+}
+function staffHub(){
+ const tiles=[
+  {key:'caixa',icon:'credit-card',symbol:'💳',title:'Caixa',subtitle:'Confirmar pagamentos e enviar pedidos para preparação.',roles:['cashier','admin']},
+  {key:'cozinha',icon:'chef-hat',symbol:'👨‍🍳',title:'Cozinha',subtitle:'Ver os cartões, iniciar a preparação e marcar Pronto.',roles:['kitchen','admin']},
+  {key:'admin',icon:'settings',symbol:'⚙️',title:'Administrador',subtitle:'Gerir produtos, combos, finanças e relatórios.',roles:['admin']}
+ ];
+ return header('Acesso da Equipa','Selecione o seu posto de trabalho para entrar no sistema.')+
+  `<section class="staff-entry-grid">${tiles.map(t=>`<a class="staff-entry-card" href="#/${t.key}">
+    <span class="staff-entry-icon">${t.symbol}</span>
+    <h2>${t.title}</h2>
+    <p>${t.subtitle}</p>
+    <span class="staff-entry-action">${S.role&&t.roles.includes(S.role)?'Abrir painel':'Entrar'} <span aria-hidden="true">→</span></span>
+   </a>`).join('')}</section>
+  <p class="staff-entry-help">Cada área é protegida por login. Para os tablets da cozinha, escolha <strong>Cozinha</strong>; para receber pagamentos, escolha <strong>Caixa</strong>.</p>`;
 }
 function login(r){return header('Área da equipa','Acesso protegido para caixa, cozinha e administração.')+`<section class="panel login"><h2>${E({caixa:'Caixa',cozinha:'Cozinha',admin:'Administrador'}[r]||'Equipa')}</h2>${S.user?`<p>A conta ${E(S.user.email)} ainda não está autorizada nesta área.</p><button data-do="logout">Sair da conta</button>`:`<form id="login" class="form-grid"><label>Email<input type="email" name="email" required autocomplete="username" value="${E(S.loginEmail)}"></label><label>Palavra-passe<input type="password" name="password" required autocomplete="current-password"></label><button>Entrar</button></form>`}<p class="muted">Apenas contas criadas e autorizadas no Supabase têm acesso à equipa.</p></section>`;}
 function orderCard(o,actions){
@@ -540,7 +556,7 @@ root.addEventListener('input',e=>{if(e.target?.id==='product-icon-input')updateP
 root.addEventListener('change',e=>{let t=e.target;if(t.id==='food')S.food=t.value;if(t.id==='drink')S.drink=t.value;if(t.id==='qty')S.qty=Math.max(1,Math.min(20,Number(t.value)||1));if(t.id==='month'){S.month=t.value;S.analytics=null;paint();loadAnalytics(S.month).then(()=>paint()).catch(ex=>{S.analyticsError=ex.message;paint();});}
 if(t.id==='stats-month'){S.month=t.value;S.analytics=null;S.analyticsError='';paint();loadAnalytics(S.month).then(()=>paint()).catch(ex=>{S.analyticsError=ex.message;paint();});}});
 root.addEventListener('submit',e=>{e.preventDefault();let f=e.target,formId=f.getAttribute('id');if(formId==='productForm'){saveProductForm();return;}let d=new FormData(f);if(formId==='checkout-name-form'){submitNamedOrder(d);return;}(async()=>{S.busy=true;
-if(formId==='login'){S.loginEmail=String(d.get('email')||'').trim();let r=await api.auth.signInWithPassword({email:S.loginEmail,password:String(d.get('password'))});if(r.error)throw Error(r.error.message?.includes('Invalid login credentials')?'Email ou palavra-passe incorretos. Verifique a conta ou redefina a palavra-passe no Supabase.':r.error.message);await auth();if(!S.role)throw Error('Conta sem autorização de equipa');S.loginEmail='';await loadOrders();}
+if(formId==='login'){S.loginEmail=String(d.get('email')||'').trim();let r=await api.auth.signInWithPassword({email:S.loginEmail,password:String(d.get('password'))});if(r.error)throw Error(r.error.message?.includes('Invalid login credentials')?'Email ou palavra-passe incorretos. Verifique a conta ou redefina a palavra-passe no Supabase.':r.error.message);await auth();if(!S.role)throw Error('Conta sem autorização de equipa');S.loginEmail='';const destination=S.role==='kitchen'?'cozinha':S.role==='cashier'?'caixa':'admin';if(!allowed(route()))location.hash='#/'+destination;await loadOrders();}
 if(formId==='comboForm'){let stock=String(d.get('stock')).trim(),data={name:String(d.get('name')).trim(),description:String(d.get('description')).trim(),price_cents:Math.round(Number(d.get('price'))*100),stock_qty:stock===''?null:Number(stock),sort_order:Number(d.get('sort'))||0,active:d.get('active')==='true'};if(!Number.isInteger(data.price_cents)||data.price_cents<1||(data.stock_qty!==null&&(!Number.isInteger(data.stock_qty)||data.stock_qty<0)))throw Error('Preço ou estoque inválido');let id=String(d.get('id')||'');
 const req=id?api.from('cafe_combos').update(data).eq('id',id):api.from('cafe_combos').insert(data);
 const r=await req.select('id,price_cents,name');
