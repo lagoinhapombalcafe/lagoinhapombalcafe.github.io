@@ -1,5 +1,5 @@
 import {CONFIG} from './config.js';
-import * as MX from './marmitex.js?v=4.1';
+import * as MX from './marmitex.js?v=4.2';
 
 const root=document.querySelector('#marmitex-root');
 const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -14,12 +14,12 @@ const login=r=>'<div class="mx-login-panel"><span class="mx-eyebrow">ACESSO REST
 function paint(){
  const r=route();
  const main=staffRoute(r)&&!permitted(r)?login(r):MX.mxRender(r,role);
- root.innerHTML='<header class="mxt-header"><div class="mxt-header-inner"><a class="mxt-brand" href="#/marmitex" aria-label="Marmitex Lagoinha Pombal"><span class="mxt-brand-icon">🍱</span><span class="mxt-brand-words"><strong>LAGOINHA POMBAL</strong><em>MARMITEX</em></span></a>'+
+ root.innerHTML='<header class="mxt-header"><div class="mxt-header-inner"><a class="mxt-brand" href="#/marmitex" aria-label="Marmitex Lagoinha Café"><img class="mxt-header-logo" src="./assets/logo-lagoinha-cafe.svg" alt="Lagoinha Café"><span class="mxt-brand-words mxt-subbrand"><em>MARMITEX</em></span></a>'+
  '<nav class="mxt-nav" aria-label="Acessos"><a href="#/marmitex" '+(r==='marmitex'||r==='marmitex-pedido'?'aria-current="page"':'')+'>Encomendar</a><a href="#/marmitex-caixa" '+(r==='marmitex-caixa'||r==='marmitex-admin'?'aria-current="page"':'')+'>Caixa</a></nav></div></header>'+
  '<main class="mxt-main">'+(notice?'<p role="alert" class="mx-notice">'+safe(notice)+'</p>':'')+main+'</main>'+
- '<footer class="mxt-footer"><strong>Lagoinha Pombal · Marmitex</strong><span>Encomendas antecipadas · Retirada no domingo</span>'+
+ '<footer class="mxt-footer"><strong>Lagoinha Café · Marmitex</strong><span>Encomendas antecipadas · Retirada no domingo</span>'+
  (user?'<button type="button" data-op="logout">Sair da conta</button>':'')+'</footer>';
- document.title=(r==='marmitex-caixa'?'Caixa · ':r==='marmitex-admin'?'Administração · ':r==='marmitex-pedido'?'Comprovativo · ':'Encomendas · ')+'Marmitex Lagoinha Pombal';
+ document.title=(r==='marmitex-caixa'?'Caixa · ':r==='marmitex-admin'?'Administração · ':r==='marmitex-pedido'?'Comprovativo · ':'Encomendas · ')+'Marmitex Lagoinha Café';
 }
 async function fetchAuth(){
  const {data,error}=await api.auth.getUser();
