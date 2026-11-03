@@ -1,7 +1,7 @@
 {
-  "name": "Lagoinha Café Pombal — Pedidos",
+  "name": "Lagoinha Café — Pedidos",
   "short_name": "Lagoinha Café",
-  "description": "Lagoinha Café Pombal: faça o seu pedido, pague no balcão e acompanhe a retirada",
+  "description": "Lagoinha Café: cardápio e pedidos, pagamento no balcão e acompanhamento da retirada",
   "start_url": "./#/cliente",
   "scope": "./",
   "display": "standalone",
