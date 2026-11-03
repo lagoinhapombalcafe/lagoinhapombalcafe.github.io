@@ -115,10 +115,14 @@ function menu(){
       <h1>Seu café.<br><em>Seu momento.</em></h1>
       <p>Escolha o que mais gosta, monte seu pedido e aproveite a comunhão. Simples assim.</p>
       <div class="hero-pills"><span>✓ Sem cadastro</span><span>✓ Pague no balcão</span></div>
-    </div><div class="hero-graphic" aria-hidden="true"><span class="graphic-sun"></span><img src="./assets/hero-cup.svg" class="graphic-brand-logo" alt=""><span class="graphic-ring"></span></div>
+    </div><div class="hero-photo-stage" aria-hidden="true">
+      <span class="hero-bokeh bokeh-one"></span><span class="hero-bokeh bokeh-two"></span><span class="hero-bokeh bokeh-three"></span>
+      <img src="./assets/cafe-foto.svg" class="hero-cafe-photo" alt="" decoding="async">
+      <span class="hero-photo-motto">CAFÉ · COMUNHÃO · ACOLHIMENTO</span>
+    </div>
   </section>
   ${!S.settings.orders_open?'<div class="closed"><strong>Atendimento temporariamente fechado</strong><span>Você pode conhecer o cardápio. Os pedidos serão liberados pela equipa do café.</span></div>':''}
-  <div class="menu-intro"><span class="section-eyebrow">FEITO PARA O SEU DOMINGO</span><h2>O que vai pedir hoje?</h2><p>Combine um combo com outros produtos. Tudo fica no mesmo pedido.</p></div>
+  <div class="menu-intro"><span class="section-eyebrow">☕ FEITO PARA O SEU DOMINGO</span><h2>O que vai pedir hoje?</h2><p>Combine um combo com outros produtos. Tudo fica no mesmo pedido.</p></div>
   <section class="menu-split">
     <div class="panel combo-panel"><div class="panel-head"><div><span class="section-eyebrow">01 · MAIS PEDIDOS</span><h2>Combos</h2></div><span class="section-icon">🥐</span></div>
       ${combos.length&&foods.length&&drinks.length?`${comboCards}
