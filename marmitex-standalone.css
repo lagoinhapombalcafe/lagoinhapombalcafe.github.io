@@ -1,0 +1,59 @@
+/* Portal independente de marmitex — não utiliza o cabeçalho nem a navegação do café. */
+:root{color-scheme:dark;font-family:Inter,"Segoe UI",Arial,sans-serif;background:#120e0c;color:#F8E9D2}
+*,*::before,*::after{box-sizing:border-box}
+html{min-width:320px;scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(ellipse 65vw 35vh at 94% 6%,#69402642,transparent),linear-gradient(145deg,#130f0d,#1e1510 52%,#120e0b);color:#F8E9D2;min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0;border-radius:9px;font-weight:750}
+button:disabled{cursor:not-allowed;opacity:.5}
+a{color:#F4C181}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #D9A456;outline-offset:3px}
+.mxt-header{position:relative;z-index:5;background:linear-gradient(105deg,#130e0b,#241810);border-bottom:1px solid #946C40;box-shadow:0 5px 25px #0005}
+.mxt-header-inner{max-width:1110px;margin:auto;padding:12px 22px;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:86px}
+.mxt-brand{display:inline-flex;align-items:center;gap:13px;min-width:0;color:#F8E7CD;text-decoration:none!important}
+.mxt-brand-icon{width:57px;height:57px;display:grid;place-items:center;font-size:29px;background:linear-gradient(155deg,#52341F,#2B1D13);border:1px solid #AB7E45;border-radius:17px;box-shadow:inset 0 1px #EAB77066}
+.mxt-brand-words{display:flex;flex-direction:column;gap:3px}
+.mxt-brand-words strong{display:block;font-size:14px;font-weight:900;letter-spacing:2px;line-height:1.15;white-space:nowrap}
+.mxt-brand-words em{display:block;color:#E8B570;font-family:Georgia,"Times New Roman",serif;font-size:28px;font-weight:700;letter-spacing:1.8px;font-style:normal;line-height:1}
+.mxt-nav{display:flex;align-items:center;gap:9px}
+.mxt-nav a{font-size:13px;font-weight:850;letter-spacing:.1px;text-decoration:none;color:#E8D1AF;padding:12px 17px;border:1px solid #8A633E;border-radius:10px;transition:.15s;background:#292018}
+.mxt-nav a[aria-current="page"],.mxt-nav a:hover{color:#23160B;background:linear-gradient(120deg,#F4CF8B,#E0AA65);border-color:#EDC88A}
+.mxt-main{max-width:1060px;padding:12px clamp(14px,3vw,30px) 35px;margin:auto;min-height:calc(100vh - 170px)}
+.mxt-footer{border-top:1px solid #775133;background:#120E0C;padding:18px 25px;display:flex;justify-content:center;gap:16px;align-items:center;flex-wrap:wrap;font-size:12px;color:#BCA385}
+.mxt-footer strong{color:#EBD0A8;font-size:12px}.mxt-footer button{padding:8px 14px;border:1px solid #805631;background:#352318;color:#FFD6A7}
+.mx-login-panel{max-width:500px;margin:55px auto 70px;background:linear-gradient(145deg,#322215,#1B1511);border:1px solid #91693D;border-radius:23px;padding:clamp(24px,4vw,38px);box-shadow:0 19px 41px #0007}
+.mx-login-panel h1{font-size:39px;line-height:1.15;font-family:Georgia,serif;color:#FFF0D8;margin:12px 0}
+.mx-login-panel p{font-size:14px;color:#D4BDA0;line-height:1.55}
+.mx-login-panel form{display:grid;gap:19px;margin-top:24px}
+.mx-login-panel input{width:100%;max-width:100%}
+.mx-logout{padding:12px 18px;background:#54361F;color:#FFE2B8;border:1px solid #A77944}
+.mx-standalone-note{color:#F8CA8F!important;font-size:12px!important;letter-spacing:.5px!important;margin-top:10px!important;text-decoration:none!important}
+.mx-order-card.mx-delivered{opacity:.78;border-color:#51855A;background:linear-gradient(145deg,#1C3425,#1D261D)}
+.mx-order-card button[data-act="paid_delivered"]{color:#173016;background:linear-gradient(135deg,#A8DB9F,#77BC78);border:1px solid #B5ECAB}
+.mx-order-card button[data-act="delivered"]{color:#173016;background:#9FD49B;border:1px solid #B5ECAB}
+.mx-order-card button[data-act="paid"]{color:#29190C;background:#E6BD78}
+.mx-qr-admin{display:flex;justify-content:center;margin:12px 0 22px}
+.mx-qr-admin a{display:inline-flex;align-items:center;padding:12px 19px;border-radius:10px;background:#44301F;border:1px solid #D4A061;text-decoration:none;font-size:13px;font-weight:850}
+.mx-qr-admin a:hover{background:#634124}
+.mx-dish:has(button:focus-visible){outline:2px solid #EBC37D}
+@media(max-width:700px){
+ .mxt-header-inner{min-height:66px;padding:10px 13px;gap:7px}
+ .mxt-brand{gap:7px;min-width:0;flex:1 1 auto}
+ .mxt-brand-icon{width:40px;height:40px;flex:0 0 40px;border-radius:11px;font-size:22px}
+ .mxt-brand-words{gap:2px;min-width:0}
+ .mxt-brand-words strong{font-size:9px;letter-spacing:1px}
+ .mxt-brand-words em{font-size:20px;letter-spacing:.8px}
+ .mxt-nav{gap:4px;flex:0 0 auto}
+ .mxt-nav a{font-size:10px;padding:9px 8px;white-space:nowrap}
+ .mxt-main{padding:8px 12px 24px}
+ .mxt-footer{font-size:10px;gap:7px;text-align:center}
+ .mx-hero{margin-top:3px}
+ .mx-staff-nav{gap:5px}
+ .mx-staff-nav a{font-size:11px;padding:9px}
+}
+@media(max-width:370px){
+ .mxt-brand-icon{width:35px;height:35px;flex-basis:35px;font-size:20px}
+ .mxt-brand-words strong{font-size:8px;letter-spacing:.5px}
+ .mxt-brand-words em{font-size:18px}
+ .mxt-nav a{font-size:9px;padding:8px 7px}
+}
