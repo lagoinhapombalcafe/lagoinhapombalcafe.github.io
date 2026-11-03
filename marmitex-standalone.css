@@ -57,3 +57,20 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
  .mxt-brand-words em{font-size:18px}
  .mxt-nav a{font-size:9px;padding:8px 7px}
 }
+
+/* Lagoinha Café unified identity v4.2 */
+.mxt-brand{gap:11px!important}
+.mxt-header-logo{display:block;flex:0 0 auto;width:226px;max-width:45vw;height:68px;object-fit:contain;object-position:left center}
+.mxt-subbrand{border-left:1px solid #9A6C3B;padding-left:12px;min-width:0}
+.mxt-subbrand em{font-family:Lato,"Segoe UI",Arial,sans-serif!important;font-size:17px!important;font-weight:900!important;letter-spacing:1.7px!important;color:#DDB177!important}
+@media(max-width:700px){
+ .mxt-header-inner{min-height:65px!important}
+ .mxt-header-logo{width:154px;max-width:calc(100vw - 181px);height:51px}
+ .mxt-subbrand{display:none}
+ .mxt-nav{gap:5px}
+ .mxt-nav a{font-size:11px;padding:9px 11px}
+}
+@media(max-width:360px){
+ .mxt-header-logo{width:132px;max-width:calc(100vw - 155px);height:42px}
+ .mxt-nav a{font-size:10px;padding:8px 8px}
+}
