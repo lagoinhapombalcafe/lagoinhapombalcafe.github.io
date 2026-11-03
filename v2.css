@@ -1224,3 +1224,65 @@ footer{border-top:1px solid #6D513259;padding-top:16px;color:#B69C80!important}
 .main-header .brand-logo{width:90px!important;height:90px!important;max-width:100%!important;object-fit:contain!important;object-position:center!important}
 .hero-brand-icon{background:#faf6ef;padding:9px;border-radius:23px}
 @media(max-width:760px){.main-header .brand{flex:0 0 76px!important;min-width:76px!important;max-width:76px!important;padding:4px}.main-header .brand-logo{width:68px!important;height:68px!important}}
+
+/* V4.5 — cabeçalho escuro sem cartão branco; geometria SVG original preservada */
+.main-header {
+  min-height:108px!important;
+  padding:8px clamp(14px,3vw,34px)!important;
+  background:#110d0b!important;
+}
+.main-header .brand {
+  display:flex!important;
+  flex:0 0 134px!important;
+  width:134px!important;
+  min-width:134px!important;
+  max-width:134px!important;
+  height:100px!important;
+  max-height:none!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  overflow:visible!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+.main-header .brand .brand-logo {
+  display:block!important;
+  width:128px!important;
+  height:100px!important;
+  max-width:none!important;
+  max-height:none!important;
+  padding:0!important;
+  margin:0!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+}
+@media(max-width:700px){
+  .main-header{min-height:92px!important;max-height:none!important;padding:6px 10px!important}
+  .main-header .brand{
+    flex:0 0 112px!important;
+    width:112px!important;
+    min-width:112px!important;
+    max-width:112px!important;
+    height:80px!important;
+    max-height:none!important;
+  }
+  .main-header .brand .brand-logo{
+    width:108px!important;height:80px!important;
+    max-width:none!important;max-height:none!important;
+    object-fit:contain!important;
+  }
+  .main-header nav{max-width:calc(100% - 118px)!important}
+}
+@media(max-width:370px){
+  .main-header .brand{flex-basis:96px!important;width:96px!important;min-width:96px!important;max-width:96px!important}
+  .main-header .brand .brand-logo{width:94px!important;height:76px!important;max-width:none!important}
+  .main-header nav{max-width:calc(100% - 102px)!important}
+}
