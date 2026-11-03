@@ -579,3 +579,203 @@ button.ghost:hover:not(:disabled){background:#484037}
 @media print{
  body:has(.qr-branding) .qr-brand-poster{width:210mm!important;height:297mm!important;max-width:none!important;object-fit:fill!important}
 }
+
+
+
+/* -------------------------------------------------------------
+   Lagoinha Café Pombal v3.16 — visual fiel ao cartaz aprovado:
+   café real, iluminação âmbar, madeira, creme, preto e dourado
+   ------------------------------------------------------------- */
+:root{
+  --gold:#E3AC5D;
+  --gold-soft:#F0D0A0;
+  --ink:#FFF1DD;
+  --line:#735338;
+  --muted:#C9B8A2
+}
+body{
+  background:
+    radial-gradient(ellipse 720px 500px at 88% 120px,rgba(137,74,32,.17),transparent 72%),
+    radial-gradient(ellipse 600px 370px at 0% 600px,rgba(151,89,40,.15),transparent 80%),
+    linear-gradient(155deg,#15110f,#0d0b0a 55%,#1b120e)!important;
+}
+.main-header{
+  background:linear-gradient(95deg,#130e0b 0%,#100d0b 74%,#1d120b 100%)!important;
+  border-bottom:1px solid #BB853D!important;
+  box-shadow:0 6px 30px #0006,0 1px 0 #d7a25655!important
+}
+.main-header .brand-logo{filter:drop-shadow(0 2px 6px #d99b4125)}
+.main-header nav a{transition:background-color .15s,color .15s!important}
+.main-header nav a:hover,.main-header nav a:focus-visible{
+  background:#46301a!important;color:#FFE9C7!important;
+}
+.wrap{max-width:1200px}
+.client-hero{
+  position:relative!important;isolation:isolate!important;
+  min-height:435px!important;
+  padding:49px clamp(26px,5vw,65px)!important;
+  border-radius:28px!important;
+  border:1px solid #AA7842!important;
+  background:
+    radial-gradient(circle at 72% 22%,#D89A4A25 0%,transparent 25%),
+    radial-gradient(circle at 93% 84%,#B468322E 0%,transparent 35%),
+    linear-gradient(111deg,#16110e 4%,#20140e 49%,#392115 77%,#120d0a 100%)!important;
+  box-shadow:0 22px 52px #0009,inset 0 1px #E9B46F25!important;
+  overflow:hidden!important;
+}
+.client-hero:before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(circle at 75% 16%,#E2A04F88 0 4px,transparent 36px),
+    radial-gradient(circle at 89% 33%,#E8AA5588 0 8px,transparent 56px),
+    radial-gradient(circle at 65% 68%,#F6AE4F4A 0 7px,transparent 67px),
+    radial-gradient(circle at 93% 83%,#D18C4D77 0 6px,transparent 42px);
+  opacity:.54
+}
+.client-hero:after{
+  content:"";position:absolute;left:7%;right:7%;bottom:0;
+  height:2px;background:linear-gradient(90deg,transparent,#D49A4E 25%,#F4CF8C 55%,transparent);
+  z-index:3
+}
+.client-hero-text{position:relative!important;z-index:4!important;max-width:64%!important}
+.client-hero .hero-kicker{
+  display:inline-flex;align-items:center;gap:8px;
+  color:#F7D7A4!important;font-size:11px!important;letter-spacing:2.2px!important;
+  text-transform:uppercase;text-shadow:0 2px 8px #0009;
+}
+.client-hero .hero-dot{
+  background:#E5AB55!important;box-shadow:0 0 0 6px #D5983827,0 0 19px #D5994A80!important
+}
+.client-hero h1{
+  font-family:Georgia,'Times New Roman',serif!important;
+  font-size:clamp(52px,5.6vw,77px)!important;line-height:1.04!important;
+  letter-spacing:-2px!important;color:#FFF1DC!important;
+  text-shadow:0 3px 22px #0007!important;
+  margin:20px 0 25px!important
+}
+.client-hero h1 em{
+  display:inline-block;
+  font-weight:500!important;
+  color:#F6C477!important;
+  text-shadow:0 3px 18px #C17B3840!important
+}
+.client-hero p{
+  max-width:530px!important;
+  margin:0 0 25px!important;
+  color:#F5E5CE!important;font-size:16px!important;line-height:1.65!important
+}
+.hero-pills{gap:13px!important}
+.hero-pills span{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 17px!important;background:#1B130DBB!important;
+  color:#F9E9D0!important;font-size:12px!important;
+  border:1px solid #CE9749!important;border-radius:99px!important;
+  box-shadow:0 2px 10px #0006!important
+}
+.hero-photo-stage{
+  position:absolute;z-index:1;
+  right:0;top:0;bottom:0;width:47%;
+  overflow:hidden;pointer-events:none;
+  background:radial-gradient(ellipse at 51% 66%,#BA74334D,transparent 66%);
+}
+.hero-photo-stage:before{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(90deg,#21140C 0%,#21140C14 23%,transparent 49%,#1A100A1E 90%);
+}
+.hero-photo-stage:after{
+  content:"";position:absolute;inset:auto 6% -20px 5%;height:74px;z-index:3;pointer-events:none;
+  background:radial-gradient(ellipse,#C17B2D88,transparent 72%);filter:blur(19px)
+}
+.hero-cafe-photo{
+  position:absolute;z-index:1;right:10%;bottom:-13%;
+  display:block;height:121%;width:auto;max-width:none;
+  object-fit:cover;opacity:.96;
+  -webkit-mask-image:radial-gradient(ellipse 80% 70% at 49% 58%,#000 53%,#000A 67%,transparent 96%);
+  mask-image:radial-gradient(ellipse 80% 70% at 49% 58%,#000 53%,#000A 67%,transparent 96%);
+  filter:drop-shadow(0 14px 30px #0007) saturate(1.12);
+}
+.hero-bokeh{
+  display:block;position:absolute;z-index:0;border-radius:50%;
+  background:radial-gradient(circle,#FFD499 0%,#C28135BB 18%,#AF692348 50%,transparent 72%);
+  filter:blur(10px);opacity:.85
+}
+.bokeh-one{width:118px;height:118px;top:6%;right:22%}
+.bokeh-two{width:78px;height:78px;top:48%;right:3%;opacity:.58}
+.bokeh-three{width:88px;height:88px;bottom:6%;left:1%;opacity:.4}
+.hero-photo-motto{
+  position:absolute;z-index:5;bottom:19px;right:8%;
+  color:#EFC88D;font-size:9px;font-weight:800;letter-spacing:2.2px;
+  text-shadow:0 3px 11px #000;white-space:nowrap
+}
+.menu-intro{padding:16px 4px 25px!important}
+.menu-intro .section-eyebrow{color:#E9B66E!important}
+.menu-intro h2{color:#FFF0D7!important}
+.menu-intro p{color:#CDBBA4!important}
+.combo-panel,.singles-panel,.cart{
+  background:linear-gradient(148deg,#251C17 0%,#171514 46%,#241912 100%)!important;
+  border:1px solid #654A30!important;
+  box-shadow:0 16px 36px #0005,inset 0 1px #D4A25713!important;
+}
+.combo-panel .panel-head,.singles-panel .panel-head{border-bottom:1px solid #63492F;padding-bottom:17px}
+.combo-panel .panel-head h2,.singles-panel .panel-head h2{color:#F9E4C5!important}
+.combo-option{
+  background:linear-gradient(128deg,#35261B,#29211A)!important;
+  border:1px solid #7B5939!important;
+  border-radius:15px!important;
+  box-shadow:0 5px 18px #0003;
+}
+.combo-option.current{
+  background:linear-gradient(122deg,#51351F,#33251B)!important;
+  border-color:#E7B160!important;
+  box-shadow:0 0 0 1px #DFAB604D,inset 0 0 32px #E7AE5120!important
+}
+.combo-option.current .combo-price{color:#FAD89B!important}
+.choice-tile{background:#2B231D!important;border:1px solid #5A432E!important;border-radius:12px!important}
+.choice-tile.selected{background:#5C4126!important;border:1px solid #EDB46D!important}
+.unit-card{border-bottom-color:#5D432B!important;padding:15px 2px!important}
+.unit-art{
+ background:linear-gradient(148deg,#674326,#392719)!important;
+ border-color:#946A42!important;box-shadow:inset 0 0 18px #F0B15E18
+}
+.unit-add,.combo-add-btn,.checkout-btn,.qr-print-btn{
+  background:linear-gradient(120deg,#F7CD81,#D99C48)!important;
+  color:#271808!important;border:1px solid #FFE0A4!important;
+  box-shadow:0 4px 13px #0006,inset 0 1px #FFF3CE66!important
+}
+.unit-add:hover,.combo-add-btn:hover,.checkout-btn:hover{filter:brightness(1.08)!important}
+.staff-entry-card{
+  background:radial-gradient(circle at 100% 0%,#9A602326,transparent 54%),
+  linear-gradient(150deg,#30231A,#181311)!important;border-color:#88643D!important
+}
+.hero,.kitchen-topline{
+  background:radial-gradient(circle at 88% 20%,#A46A2D33,transparent 48%),
+   linear-gradient(135deg,#302219,#171310)!important;
+  border-color:#8B6238!important
+}
+.pickup{background:radial-gradient(ellipse at 50% 10%,#614026,#1B140F 58%,#0C0B0A)!important}
+.pickup section b{background:linear-gradient(155deg,#3A2A1D,#1E1C19)!important;border-color:#C39556!important}
+footer{border-top:1px solid #6D513259;padding-top:16px;color:#B69C80!important}
+@media(max-width:850px){
+ .client-hero{min-height:365px!important;padding:36px 34px!important}
+ .client-hero-text{max-width:72%!important}
+ .client-hero h1{font-size:clamp(44px,6.5vw,59px)!important}
+ .client-hero p{font-size:14px!important}
+ .hero-photo-stage{width:46%}
+ .hero-cafe-photo{right:0;height:114%}
+ .hero-photo-motto{display:none}
+}
+@media(max-width:650px){
+ .client-hero{min-height:365px!important;padding:31px 22px!important}
+ .client-hero-text{max-width:100%!important}
+ .client-hero .hero-kicker{font-size:9px!important;letter-spacing:1.2px!important}
+ .client-hero h1{font-size:clamp(42px,9.4vw,61px)!important;margin:15px 0 18px!important}
+ .client-hero p{font-size:13px!important;max-width:86%!important;line-height:1.5!important}
+ .hero-photo-stage{width:54%;opacity:.30}
+ .hero-photo-stage:before{background:linear-gradient(90deg,#1B100D 0%,#21140D88 45%,transparent)}
+ .hero-cafe-photo{right:-17%;height:113%}
+ .hero-pills span{font-size:10px!important;padding:9px 11px!important}
+ .combo-panel,.singles-panel,.cart{border-radius:17px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .hero-bokeh{transition:none}
+}
