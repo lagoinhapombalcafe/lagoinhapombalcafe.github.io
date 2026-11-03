@@ -120,7 +120,7 @@ function mxAdmin(){
  const dates=(dash.weeks||[]).map(w=>'<option value="'+mxEsc(w.id)+'" '+(wk&&w.id===wk.id?'selected':'')+'>'+mxEsc(mxFormatDate(w.pickup_date))+'</option>').join('');
  return '<section class="mx-hero"><div class="mx-kicker">ADMINISTRADOR · ENCOMENDAS SEMANAIS</div><h1>Gestão de <em>Marmitex.</em></h1><p>Defina o domingo, o prazo para encomendar e os pratos. Só abra quando os preços e as quantidades estiverem corretos.</p></section>'+mxStaffNav()+mxMsg()+
  '<div class="mx-qr-admin"><a href="./marmitex-qr.html" target="_blank" rel="noopener">◼ Ver e imprimir QR Code exclusivo das marmitex ↗</a></div>'+ 
- '<section class="mx-admin-grid"><div class="mx-panel"><h2>1 · Configurar domingo</h2><p class="mx-footnote">Por padrão, o prazo encerra no sábado às 18h. Mantenha fechado até preparar o cardápio.</p>'+
+ '<section class="mx-admin-grid"><div class="mx-panel"><h2>1 · Configurar domingo</h2><p class="mx-footnote">Confira o prazo de encerramento configurado para esta semana. Abra as encomendas somente quando o cardápio estiver pronto.</p>'+
  '<form id="mx-week-form"><label class="mx-field">Domingo de retirada<input name="pickup_date" type="date" required value="'+mxEsc(date)+'"></label>'+
  '<label class="mx-field">Prazo final para encomendar<input name="cutoff_local" type="datetime-local" required value="'+mxEsc(deadline)+'"></label>'+
  '<label class="mx-field">Informações de retirada<input name="pickup_note" maxlength="180" value="'+mxEsc(wk?.pickup_note||'Retirada no domingo na igreja')+'"></label>'+
