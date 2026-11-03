@@ -49,7 +49,7 @@ function mxPublic(){
   const qty=Number(M.cart[i.id]||0);
   return '<article class="mx-dish"><span class="mx-dish-photo">🍱</span><div class="mx-dish-info"><h3>'+mxEsc(i.name)+'</h3><p>'+mxEsc(i.description||'Refeição preparada para domingo')+'</p><strong>'+mxEUR(i.price_cents)+'</strong>'+(i.available!==null?'<small>Disponíveis: '+Number(i.available)+'</small>':'')+'</div><div class="mx-qty"><button type="button" data-do="mx" data-act="less" data-id="'+mxEsc(i.id)+'" aria-label="Diminuir '+mxEsc(i.name)+'">−</button><b>'+qty+'</b><button type="button" data-do="mx" data-act="more" data-id="'+mxEsc(i.id)+'" aria-label="Adicionar '+mxEsc(i.name)+'" '+(i.available!==null&&qty>=i.available?'disabled':'')+'>+</button></div></article>';
  }).join('');
- return '<section class="mx-hero"><div class="mx-kicker">LAGOINHA CAFÉ POMBAL · ENCOMENDAS</div><h1>Marmitex para <em>domingo.</em></h1><p>Encomende durante a semana e retire na igreja, no domingo. Escolha o seu prato e a quantidade, sem criar conta.</p><a href="#/cliente" class="mx-back">← Voltar ao Café</a></section>'+
+ return '<section class="mx-hero"><div class="mx-kicker">LAGOINHA CAFÉ POMBAL · ENCOMENDAS</div><h1>Marmitex para <em>domingo.</em></h1><p>Encomende durante a semana e retire na igreja, no domingo. Escolha o seu prato e a quantidade, sem criar conta.</p><span class="mx-back mx-standalone-note">🍱 Encomenda exclusiva para retirada no domingo</span></section>'+
  mxMsg()+
  (!selected?'<section class="mx-panel mx-centered"><span class="mx-large-emoji">🍽️</span><h2>Encomendas ainda fechadas</h2><p>O cardápio da próxima semana será publicado aqui quando estiver pronto. Volte em breve!</p></section>':
  '<section class="mx-panel"><div class="mx-section-title"><div><span class="mx-eyebrow">RETIRADA NA IGREJA</span><h2>'+mxEsc(mxFormatDate(selected.pickup_date))+'</h2><p>'+mxEsc(selected.pickup_note||'Retirada no domingo')+'</p><small>Encomendas até '+mxEsc(new Intl.DateTimeFormat('pt-PT',{timeZone:'Europe/Lisbon',dateStyle:'short',timeStyle:'short'}).format(new Date(selected.order_cutoff)))+'</small></div></div>'+choose+
@@ -60,50 +60,54 @@ function mxPublic(){
 function mxTicket(){
  const o=M.ticket;
  if(!o)return '<section class="mx-panel"><h2>Encomenda não encontrada</h2><p>Verifique o endereço do seu comprovativo.</p></section>';
- const labels={reserved:'Encomenda registada',preparing:'Em preparação',ready:'Pronta para retirada',delivered:'Entregue',cancelled:'Cancelada'};
+ const labels={reserved:'Encomenda confirmada para domingo',preparing:'Encomenda confirmada',ready:'Disponível para retirada',delivered:'Retirada concluída',cancelled:'Encomenda cancelada'};
  return '<section class="mx-hero"><div class="mx-kicker">COMPROVATIVO DIGITAL</div><h1>Encomenda de <em>'+mxEsc(o.customer_name)+'</em></h1><p>Retirada '+mxEsc(mxFormatDate(o.pickup_date))+'</p></section>'+mxMsg()+
  '<section class="mx-panel mx-ticket"><strong class="mx-status mx-'+mxEsc(o.status)+'">'+mxEsc(labels[o.status]||o.status)+'</strong>'+
- (o.status==='ready'?'<div class="mx-alert-ready">🔔 A sua marmitex está pronta! Dirija-se ao balcão para pagar (se necessário) e retirar.</div>':'')+
+ (o.status==='delivered'?'<div class="mx-alert-ready">✓ Retirada concluída. Obrigado!</div>':'')+
  '<h2>Resumo do pedido</h2><div class="mx-ticket-list">'+(o.items||[]).map(i=>'<div><span>'+i.quantity+'× '+mxEsc(i.name)+'</span><b>'+mxEUR(i.quantity*i.unit_price_cents)+'</b></div>').join('')+'</div><div class="mx-total"><span>Total</span><strong>'+mxEUR(o.total_cents)+'</strong></div>'+
- '<p><strong>Pagamento:</strong> '+(o.payment_status==='paid'?'Confirmado':'Pagar no balcão')+'</p><p>'+mxEsc(o.pickup_note||'Retirada na igreja')+'</p><button data-do="mx" data-act="refresh" class="mx-primary">Atualizar estado ↻</button><p class="mx-footnote">Guarde este link. O estado é atualizado enquanto esta página estiver aberta ou quando voltar a ela.</p></section>';
+ '<p><strong>Pagamento:</strong> '+(o.payment_status==='paid'?'Confirmado':'No Caixa, durante a retirada')+'</p><p>'+mxEsc(o.pickup_note||'Retirada na igreja')+'</p><button data-do="mx" data-act="refresh" class="mx-primary">Atualizar estado ↻</button><p class="mx-footnote">Guarde este link. O estado é atualizado enquanto esta página estiver aberta ou quando voltar a ela.</p></section>';
 }
 
 function mxStaffNav(){
- return '<nav class="mx-staff-nav"><a href="#/marmitex-admin">Gestão</a><a href="#/marmitex-caixa">Caixa</a><a href="#/marmitex-cozinha">Cozinha</a><a href="#/marmitex">Cardápio público</a></nav>';
+ return '<nav class="mx-staff-nav" aria-label="Marmitex"><a href="#/marmitex">Encomendar</a><a href="#/marmitex-caixa">Caixa</a>'+(M.dashboard?.role==='admin'?'<a class="mx-admin-link" href="#/marmitex-admin">Gestão do cardápio</a>':'')+'</nav>';
 }
-
-function mxStaffOrders(view){
+function mxStaffOrders(){
  const dash=M.dashboard||{weeks:[],items:[],orders:[]};
  const wk=mxWeek();
- const orders=(dash.orders||[]).filter(o=>wk&&o.week_id===wk.id&&o.status!=='cancelled');
- const canCashier=view==='marmitex-caixa';
- const canKitchen=view==='marmitex-cozinha';
- const weeks=dash.weeks||[];
- const weekPicker='<label class="mx-field mx-week-picker">Domingo<select id="mx-week-select">'+weeks.map(w=>'<option value="'+mxEsc(w.id)+'" '+(wk&&w.id===wk.id?'selected':'')+'>'+mxEsc(mxFormatDate(w.pickup_date))+'</option>').join('')+'</select></label>';
- const sold=new Map();
- for(const o of orders)for(const l of o.items||[])sold.set(l.name,(sold.get(l.name)||0)+Number(l.quantity));
- const pending=orders.filter(o=>o.status==='reserved');
- const prep=orders.filter(o=>o.status==='preparing');
- const ready=orders.filter(o=>o.status==='ready');
+ const all=(dash.orders||[]).filter(o=>wk&&o.week_id===wk.id);
+ const orders=all.filter(o=>o.status!=='cancelled');
+ const pending=orders.filter(o=>o.payment_status==='pending'&&o.status!=='delivered');
+ const paid=orders.filter(o=>o.payment_status==='paid'&&o.status!=='delivered');
+ const delivered=orders.filter(o=>o.status==='delivered');
  const received=orders.filter(o=>o.payment_status==='paid').reduce((n,o)=>n+o.total_cents,0);
- const cards=orders.filter(o=>canKitchen?['reserved','preparing'].includes(o.status):o.status!=='delivered')
-   .sort((a,b)=>(a.status==='ready'?0:1)-(b.status==='ready'?0:1)||a.created_at.localeCompare(b.created_at))
-   .map(o=>{
-    const buttons=[];
-    if(canKitchen&&o.status==='reserved')buttons.push(['preparing','Iniciar preparo']);
-    if(canKitchen&&['reserved','preparing'].includes(o.status))buttons.push(['ready','✓ Pronto']);
-    if(canCashier&&o.payment_status==='pending')buttons.push(['paid','Confirmar pagamento']);
-    if(canCashier&&o.status==='ready'&&o.payment_status==='paid')buttons.push(['delivered','Entregue']);
-    if(canCashier&&o.payment_status==='pending'&&o.status==='reserved')buttons.push(['cancel','Cancelar']);
-    return '<article class="mx-order-card state-'+mxEsc(o.status)+'"><div class="mx-order-top"><strong>'+mxEsc(o.customer_name)+'</strong><span>'+mxEsc(o.status.toUpperCase())+'</span></div><p class="mx-order-ref">#'+mxEsc(String(o.id).slice(-6).toUpperCase())+' · '+(o.payment_status==='paid'?'PAGO':'POR PAGAR')+(o.customer_phone?' · '+mxEsc(o.customer_phone):'')+'</p><div class="mx-order-lines">'+(o.items||[]).map(l=>'<div><b>'+l.quantity+'×</b><span>'+mxEsc(l.name)+'</span></div>').join('')+'</div><div class="mx-order-bottom"><strong>'+mxEUR(o.total_cents)+'</strong><div>'+buttons.map(([act,label])=>'<button type="button" data-do="mx" data-act="'+act+'" data-id="'+mxEsc(o.id)+'" '+(M.busy?'disabled':'')+'>'+label+'</button>').join('')+'</div></div></article>';
-   }).join('');
- return '<section class="mx-hero"><div class="mx-kicker">EQUIPA · MARMITEX</div><h1>'+ (canCashier?'Caixa': 'Cozinha')+' <em>de domingo.</em></h1><p>'+(canCashier?'Confirme pagamentos e finalize as retiradas.':'Prepare várias encomendas ao mesmo tempo e marque cada uma como Pronto.')+'</p></section>'+mxStaffNav()+mxMsg()+
- (wk?'<section class="mx-panel">'+weekPicker+'<div class="mx-stats"><div><small>Encomendas</small><b>'+orders.length+'</b></div><div><small>A preparar</small><b>'+(pending.length+prep.length)+'</b></div><div><small>Prontas</small><b>'+ready.length+'</b></div><div><small>Recebido</small><b>'+mxEUR(received)+'</b></div></div>'+
- (canKitchen?'<h2>Total de refeições a preparar</h2><div class="mx-production">'+([...sold.entries()].map(([name,num])=>'<div><span>'+mxEsc(name)+'</span><b>'+num+' un.</b></div>').join('')||'<p>Sem encomendas para esta semana.</p>')+'</div>':'')+
- '<h2>'+ (canCashier?'Pagamentos e levantamentos':'Cartões de preparação')+'</h2><div class="mx-order-grid">'+(cards||'<p class="mx-empty">Nenhuma encomenda em aberto.</p>')+'</div></section>':
- '<section class="mx-panel mx-centered"><h2>Sem semanas cadastradas</h2><p>O Administrador precisa criar um domingo e cadastrar os pratos antes de receber encomendas.</p></section>');
+ const qty=new Map();
+ for(const o of orders)for(const l of o.items||[])qty.set(l.name,(qty.get(l.name)||0)+Number(l.quantity));
+ const weeks=dash.weeks||[];
+ const picker='<label class="mx-field mx-week-picker">Domingo de retirada<select id="mx-week-select">'+weeks.map(w=>'<option value="'+mxEsc(w.id)+'" '+(wk&&w.id===wk.id?'selected':'')+'>'+mxEsc(mxFormatDate(w.pickup_date))+'</option>').join('')+'</select></label>';
+ const list=orders.sort((a,b)=>{
+   const state=x=>x.status==='delivered'?2:x.payment_status==='paid'?1:0;
+   return state(a)-state(b)||a.customer_name.localeCompare(b.customer_name,'pt');
+ }).map(o=>{
+   const done=o.status==='delivered';
+   const buttons=[];
+   if(!done&&o.payment_status==='pending'){
+     buttons.push(['paid_delivered','✓ Receber e entregar']);
+     buttons.push(['paid','Só confirmar pagamento']);
+     if(o.status==='reserved')buttons.push(['cancel','Cancelar']);
+   }
+   if(!done&&o.payment_status==='paid')buttons.push(['delivered','✓ Marcar como entregue']);
+   const status=done?'ENTREGUE':o.payment_status==='paid'?'PAGO · POR RETIRAR':'AGUARDA PAGAMENTO';
+   return '<article class="mx-order-card '+(done?'mx-delivered':'')+'"><div class="mx-order-top"><strong>'+mxEsc(o.customer_name)+'</strong><span>'+status+'</span></div>'+
+     '<p class="mx-order-ref">#'+mxEsc(String(o.id).slice(-6).toUpperCase())+(o.customer_phone?' · '+mxEsc(o.customer_phone):'')+'</p>'+
+     '<div class="mx-order-lines">'+(o.items||[]).map(l=>'<div><b>'+l.quantity+'×</b><span>'+mxEsc(l.name)+'</span></div>').join('')+'</div>'+
+     '<div class="mx-order-bottom"><strong>'+mxEUR(o.total_cents)+'</strong><div>'+buttons.map(([act,label])=>'<button type="button" data-do="mx" data-act="'+act+'" data-id="'+mxEsc(o.id)+'" '+(M.busy?'disabled':'')+'>'+label+'</button>').join('')+'</div></div></article>';
+ }).join('');
+ return '<section class="mx-hero"><div class="mx-kicker">MARMITEX · ATENDIMENTO</div><h1>Caixa e <em>retirada.</em></h1><p>Localize o nome, receba o pagamento e entregue a marmitex. Não existe etapa de cozinha neste sistema.</p></section>'+mxStaffNav()+mxMsg()+
+ (wk?'<section class="mx-panel">'+picker+'<div class="mx-stats"><div><small>Encomendas</small><b>'+orders.length+'</b></div><div><small>Por pagar</small><b>'+pending.length+'</b></div><div><small>Entregues</small><b>'+delivered.length+'</b></div><div><small>Recebido</small><b>'+mxEUR(received)+'</b></div></div>'+
+ '<h2>Quantidades encomendadas</h2><div class="mx-production">'+([...qty.entries()].map(([name,num])=>'<div><span>'+mxEsc(name)+'</span><b>'+num+' un.</b></div>').join('')||'<p>Sem encomendas para este domingo.</p>')+'</div>'+
+ '<h2>Encomendas e retiradas</h2><div class="mx-order-grid">'+(list||'<p class="mx-empty">Nenhuma encomenda registada.</p>')+'</div></section>':
+ '<section class="mx-panel mx-centered"><h2>Aguardando cardápio semanal</h2><p>O Administrador pode configurar as semanas no painel de gestão.</p></section>');
 }
-
 function mxAdmin(){
  const dash=M.dashboard||{weeks:[],items:[],orders:[]};
  const wk=mxWeek(),date=wk?.pickup_date||mxNextSunday();
@@ -115,6 +119,7 @@ function mxAdmin(){
  const paid=orders.filter(o=>o.payment_status==='paid').reduce((s,o)=>s+o.total_cents,0);
  const dates=(dash.weeks||[]).map(w=>'<option value="'+mxEsc(w.id)+'" '+(wk&&w.id===wk.id?'selected':'')+'>'+mxEsc(mxFormatDate(w.pickup_date))+'</option>').join('');
  return '<section class="mx-hero"><div class="mx-kicker">ADMINISTRADOR · ENCOMENDAS SEMANAIS</div><h1>Gestão de <em>Marmitex.</em></h1><p>Defina o domingo, o prazo para encomendar e os pratos. Só abra quando os preços e as quantidades estiverem corretos.</p></section>'+mxStaffNav()+mxMsg()+
+ '<div class="mx-qr-admin"><a href="./marmitex-qr.html" target="_blank" rel="noopener">◼ Ver e imprimir QR Code exclusivo das marmitex ↗</a></div>'+ 
  '<section class="mx-admin-grid"><div class="mx-panel"><h2>1 · Configurar domingo</h2><p class="mx-footnote">Por padrão, o prazo encerra no sábado às 18h. Mantenha fechado até preparar o cardápio.</p>'+
  '<form id="mx-week-form"><label class="mx-field">Domingo de retirada<input name="pickup_date" type="date" required value="'+mxEsc(date)+'"></label>'+
  '<label class="mx-field">Prazo final para encomendar<input name="cutoff_local" type="datetime-local" required value="'+mxEsc(deadline)+'"></label>'+
@@ -135,14 +140,14 @@ function mxAdmin(){
  '<div class="mx-admin-items">'+items.map(i=>'<article><div><strong>'+mxEsc(i.name)+'</strong><small>'+mxEUR(i.price_cents)+' · '+(i.capacity===null?'Sem limite':i.reserved_qty+'/'+i.capacity+' reservadas')+' · '+(i.active?'Ativo':'Inativo')+'</small></div><button type="button" data-do="mx" data-act="edit-item" data-id="'+mxEsc(i.id)+'">Editar</button></article>').join('')+'</div></div></section>'+
  (wk?'<section class="mx-panel"><h2>Resumo · '+mxEsc(mxFormatDate(wk.pickup_date))+'</h2>'+
  '<div class="mx-stats"><div><small>Encomendas</small><b>'+orders.length+'</b></div><div><small>Unidades</small><b>'+orders.reduce((n,o)=>n+(o.items||[]).reduce((k,l)=>k+Number(l.quantity),0),0)+'</b></div><div><small>Previsto</small><b>'+mxEUR(total)+'</b></div><div><small>Recebido</small><b>'+mxEUR(paid)+'</b></div></div>'+
- '<p class="mx-footnote">Para consultar os nomes, preparar ou receber as encomendas, abra o Caixa ou a Cozinha pelas opções acima.</p></section>':'');
+ '<p class="mx-footnote">Para consultar os nomes, os pagamentos e as retiradas, abra o Caixa. Não há painel de cozinha.</p></section>':'');
 }
 
 function mxRender(view,role){
  if(view==='marmitex')return mxPublic();
  if(view==='marmitex-pedido')return mxTicket();
  if(view==='marmitex-admin')return mxAdmin();
- if(view==='marmitex-caixa'||view==='marmitex-cozinha')return mxStaffOrders(view);
+ if(view==='marmitex-caixa')return mxStaffOrders();
  return '';
 }
 
@@ -157,7 +162,7 @@ async function mxLoad(api,view){
  }else if(view==='marmitex-pedido'){
   const token=location.hash.split('/')[2]||'';
   M.ticket=/^[\da-f-]{36}$/i.test(token)?await mxRPC(api,'mx_ticket',{p_token:token}):null;
- }else if(['marmitex-admin','marmitex-cozinha','marmitex-caixa'].includes(view)){
+ }else if(['marmitex-admin','marmitex-caixa'].includes(view)){
   M.dashboard=await mxRPC(api,'mx_staff_dashboard');
   if(M.weekId&&!M.dashboard.weeks.some(w=>w.id===M.weekId))M.weekId='';
  }
@@ -184,8 +189,10 @@ async function mxAction(api,b,view,role){
  if(act==='edit-item'){M.editId=id;M.notice='';return;}
  if(act==='new-item'){M.editId=null;M.notice='';return;}
  if(act==='refresh'){await mxLoad(api,view);return;}
- if(['paid','preparing','ready','delivered','cancel'].includes(act)){
-  if(act==='paid'&&!confirm('Confirmar que recebeu o pagamento desta marmitex?'))return;
+ if(['paid','paid_delivered','delivered','cancel'].includes(act)){
+  if(act==='paid'&&!confirm('Confirmar que recebeu o pagamento desta encomenda?'))return;
+  if(act==='paid_delivered'&&!confirm('Confirmar pagamento recebido e marmitex entregue ao cliente?'))return;
+  if(act==='delivered'&&!confirm('Confirmar que entregou a marmitex ao cliente?'))return;
   if(act==='cancel'&&!confirm('Cancelar esta encomenda não paga e devolver as quantidades ao cardápio?'))return;
   M.busy=true;
   try{
