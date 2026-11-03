@@ -976,3 +976,6 @@ footer{border-top:1px solid #6D513259;padding-top:16px;color:#B69C80!important}
   .hero-pills span{font-size:9px!important;padding:8px 9px!important}
   .hero-cafe-photo{right:3%!important}
 }
+
+/* Em tablets de equipa, os acessos continuam deslocáveis sem desaparecer. */
+@media(max-width:650px){.main-header nav{justify-content:flex-start!important}.main-header nav a:first-child{margin-left:auto}}
