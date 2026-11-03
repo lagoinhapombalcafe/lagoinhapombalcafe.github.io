@@ -416,3 +416,17 @@ button.ghost:hover:not(:disabled){background:#484037}
 @media(max-width:700px){.kitchen-topline{flex-direction:column;align-items:stretch}.kitchen-counters{gap:8px}.kitchen-counter{padding:13px 11px;flex-direction:column;align-items:start}.kitchen-counter strong{font-size:26px}.kitchen-counter span{font-size:11px}.cashier-card-grid{grid-template-columns:1fr}}
 @media(max-width:590px){.kitchen-ticket-grid{grid-template-columns:1fr}.kitchen-ticket-main{min-height:215px}.kitchen-topline{padding:20px}.kitchen-topline h1{font-size:29px}.kitchen-board-heading h2{font-size:22px}.kitchen-ticket-actions button{min-height:56px}}
 @media(prefers-reduced-motion:reduce){.kitchen-ticket{transition:none}}
+
+
+/* v3.12 - Acesso da equipa com escolha clara de postos */
+.staff-entry-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:20px 0}
+.staff-entry-card{display:flex;flex-direction:column;gap:12px;text-decoration:none;color:#f6ecd9;background:linear-gradient(150deg,#30271e,#1e1c1b);border:1px solid #80613e;border-radius:19px;padding:26px 23px;min-height:255px;box-shadow:0 8px 20px #0002;transition:border-color .15s,transform .15s}
+.staff-entry-card:hover,.staff-entry-card:focus-visible{border-color:#e4bc82;background:linear-gradient(145deg,#3c2d1e,#26211d);transform:translateY(-2px);outline-offset:3px}
+.staff-entry-icon{display:flex;align-items:center;justify-content:center;background:#56412a;width:65px;height:65px;border-radius:17px;font-size:34px}
+.staff-entry-card h2{font-size:27px;color:#f3d6aa}
+.staff-entry-card p{font-size:13px;line-height:1.55;color:#c8b8a1;margin:0;flex:1}
+.staff-entry-action{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#d8aa6e;color:#24190f;border-radius:12px;padding:13px 15px;font-size:14px;font-weight:900}
+.staff-entry-help{color:#c5b7a6;background:#272320;border:1px solid #564331;padding:14px 17px;border-radius:12px;font-size:13px;line-height:1.6}
+.staff-entry-help strong{color:#f4d4a4}
+@media(max-width:850px){.staff-entry-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:590px){.staff-entry-grid{grid-template-columns:1fr;gap:11px}.staff-entry-card{min-height:0;padding:20px;gap:8px}.staff-entry-icon{width:55px;height:55px;font-size:30px}.staff-entry-card h2{font-size:25px}.staff-entry-action{margin-top:4px}}
