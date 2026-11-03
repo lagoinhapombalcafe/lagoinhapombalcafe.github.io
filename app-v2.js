@@ -12,8 +12,8 @@ const valid=x=>x&&x.active&&(x.stock_qty===null||x.stock_qty>0);
 const getDate=x=>new Date(x).toLocaleTimeString('pt-PT',{timeZone:'Europe/Lisbon',hour:'2-digit',minute:'2-digit'});
 const states={awaiting_payment:'Aguarda pagamento',queued:'Na fila',preparing:'Em preparação',ready:'Pronto',delivered:'Entregue',cancelled:'Cancelado'};
 const alert=()=>S.notice?`<p class="alert">${E(S.notice)} <button class="small" data-do="dismiss">×</button></p>`:'';
-const header=(title,sub)=>`<section class="hero"><div><span class="eyebrow">LAGOINHA POMBAL · DOMINGOS 9H–10H</span><h1>${title}</h1><p>${sub}</p></div><span class="cup">☕</span></section>`;
-const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente">☕ <strong>LAGOINHA <em>CAFÉ</em></strong></a><nav><a href="#/cliente">Cliente</a><a href="#/equipa">Equipa</a>${S.role==="admin"?`<a href="#/caixa">Caixa</a><a href="#/cozinha">Cozinha</a><a href="#/admin">Administrador</a>`:S.role==="cashier"?`<a href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a href="#/cozinha">Cozinha</a>`:''}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Pombal · Rua Prof. Veiga Simão, nº 4 · Pedidos presenciais</footer>`;
+const header=(title,sub)=>`<section class="hero"><div><span class="eyebrow">LAGOINHA POMBAL · DOMINGOS 9H–10H</span><h1>${title}</h1><p>${sub}</p></div><img src="./assets/icon.svg" class="hero-brand-icon" alt="" aria-hidden="true"></section>`;
+const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente" aria-label="Lagoinha Café Pombal — ir para o cardápio"><img class="brand-logo" src="./assets/logo-cafe.svg" alt="Lagoinha Café Pombal"></a><nav><a href="#/cliente">Cliente</a><a href="#/equipa">Equipa</a>${S.role==="admin"?`<a href="#/caixa">Caixa</a><a href="#/cozinha">Cozinha</a><a href="#/admin">Administrador</a>`:S.role==="cashier"?`<a href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a href="#/cozinha">Cozinha</a>`:''}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Pombal · Rua Prof. Veiga Simão, nº 4 · Pedidos presenciais</footer>`;
 function paint(){let r=route(),body;
 if(r==='cliente')body=menu();
 else if(r==='equipa')body=staffHub();
@@ -115,7 +115,7 @@ function menu(){
       <h1>Seu café.<br><em>Seu momento.</em></h1>
       <p>Escolha o que mais gosta, monte seu pedido e aproveite a comunhão. Simples assim.</p>
       <div class="hero-pills"><span>✓ Sem cadastro</span><span>✓ Pague no balcão</span></div>
-    </div><div class="hero-graphic" aria-hidden="true"><span class="graphic-sun"></span><span class="graphic-cup">☕</span><span class="graphic-ring"></span></div>
+    </div><div class="hero-graphic" aria-hidden="true"><span class="graphic-sun"></span><img src="./assets/icon.svg" class="graphic-brand-logo" alt=""><span class="graphic-ring"></span></div>
   </section>
   ${!S.settings.orders_open?'<div class="closed"><strong>Atendimento temporariamente fechado</strong><span>Você pode conhecer o cardápio. Os pedidos serão liberados pela equipa do café.</span></div>':''}
   <div class="menu-intro"><span class="section-eyebrow">FEITO PARA O SEU DOMINGO</span><h2>O que vai pedir hoje?</h2><p>Combine um combo com outros produtos. Tudo fica no mesmo pedido.</p></div>
@@ -149,7 +149,7 @@ function ticket(){
  const name=String(t.customer_name||'').trim();
  return `<div class="panel ticket">
    <span class="eyebrow">LAGOINHA CAFÉ · MEU PEDIDO</span>
-   <span class="ticket-name-icon">☕</span>
+   <img class="ticket-brand-icon" src="./assets/icon.svg" alt="">
    <h1 class="customer-ticket-name">${E(name||'Pedido recebido')}</h1>
    <p class="ticket-internal-ref">Referência do pedido · #${String(t.number).padStart(3,'0')}</p>
    <strong class="status">${E(states[t.status]||t.status)}</strong>
@@ -164,7 +164,7 @@ function ticket(){
  </div>`;
 }
 function pickup(){
- return `<div class="pickup"><header>☕ LAGOINHA CAFÉ</header>
+ return `<div class="pickup"><header class="pickup-branded-header"><img src="./assets/logo-cafe.svg" alt="Lagoinha Café Pombal"></header>
  <h1>PEDIDOS PRONTOS</h1>
  <section>${S.ready.length?S.ready.map(x=>`<b class="pickup-name">${E(x.customer_name||'Cliente')}<small class="pickup-ref">REF. ${String(x.number).padStart(3,'0')}</small></b>`).join(''):'<p>Aguardando os próximos pedidos.</p>'}</section>
  <p>Quando vir o seu nome, dirija-se ao balcão de retirada.</p>
@@ -408,7 +408,20 @@ function productsPanel(){
 }
 function combosPanel(){let c=combo(S.editCombo);return `<div class="catalog-admin-intro"><div><span class="section-eyebrow">VENDA EM CONJUNTO</span><h2>Cadastro de combos</h2><p>Combos são conjuntos com preço próprio, separados dos produtos individuais.</p></div><div class="catalog-admin-counter"><strong>${S.combos.length}</strong><span>combos cadastrados</span></div></div><div class="main-grid"><section class="panel"><div class="panel-head"><h2>Combos cadastrados</h2><button class="small" data-do="edit-combo" data-id="">+ Novo</button></div>${S.combos.map(x=>`<div class="item"><span class="emoji">🥐</span><div><b>${E(x.name)}</b><small>${EUR(x.price_cents)} · ${x.active?'Ativo':'Oculto'} · Estoque: ${x.stock_qty??'ilimitado'}</small></div><button class="small ghost" data-do="edit-combo" data-id="${x.id}">Editar</button></div>`).join('')}</section><section class="panel"><h2>${c?'Editar combo':'Novo combo'}</h2><p class="muted">Os combos são separados dos individuais. Apenas alimentos e bebidas marcados como 'Permitir também como opção de combo' podem ser escolhidos. Defina essa permissão em Individuais.</p><form id="comboForm" class="form-grid"><input type="hidden" name="id" value="${E(c?.id||'')}"><label>Nome<input name="name" required maxlength="90" value="${E(c?.name||'')}"></label><label>Descrição<input name="description" maxlength="160" value="${E(c?.description||'Escolha 1 alimento e 1 bebida')}"></label><label>Preço em €<input type="number" step="0.01" min="0.01" name="price" required value="${c?(c.price_cents/100).toFixed(2):''}"></label><label>Estoque (vazio = ilimitado)<input type="number" min="0" name="stock" value="${c?.stock_qty??''}"></label><label>Ordem<input type="number" name="sort" value="${c?.sort_order??10}"></label><label>Estado<select name="active"><option value="true" ${c?.active!==false?'selected':''}>Ativo</option><option value="false" ${c?.active===false?'selected':''}>Oculto</option></select></label><button>Guardar combo</button></form></section></div>`;}
 function financePanel(){const month=S.month||DAY().slice(0,7),paid=S.orders.filter(x=>x.order_day.startsWith(month)&&x.payment_status==='paid'&&x.number<9000),ex=S.expenses.filter(x=>x.expense_date.startsWith(month)),a=S.analytics?.month===month?Number(S.analytics.total_cents):paid.reduce((n,x)=>n+x.total_cents,0),paidCount=S.analytics?.month===month?Number(S.analytics.paid_orders):paid.length,b=ex.reduce((n,x)=>n+x.amount_cents,0);return `<div class="panel"><div class="panel-head"><h2>Financeiro</h2><label>Mês <input id="month" type="month" value="${month}"></label></div><div class="metrics"><div>Receita confirmada<b>${EUR(a)}</b></div><div>Despesas<b>${EUR(b)}</b></div><div>Saldo<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paidCount}</b></div></div><p><button class="small ghost" data-do="csv">Exportar CSV</button></p><h3>Registar despesa</h3><form id="expenseForm" class="expense-row"><label>Data<input type="date" name="date" required value="${DAY()}"></label><label>Descrição<input name="description" required maxlength="180"></label><label>Categoria<select name="category"><option>Ingredientes</option><option>Embalagens</option><option>Equipamentos</option><option>Outros</option></select></label><label>Valor (€)<input type="number" name="amount" required min="0.01" step="0.01"></label><button>Adicionar</button></form>${ex.map(x=>`<div class="item"><div><b>${E(x.description)}</b><small>${E(x.expense_date)} · ${E(x.category)}</small></div><strong>${EUR(x.amount_cents)}</strong><button class="small ghost" data-do="delete-expense" data-id="${x.id}">Excluir</button></div>`).join('')||'<p class="muted">Sem despesas neste mês.</p>'}<p class="muted">Saldo é receita recebida menos despesas registadas. Não inclui impostos nem custos não lançados.</p></div>`;}
-function qr(){let url=location.origin+location.pathname+'#/cliente',img='https://api.qrserver.com/v1/create-qr-code/?size=450x450&data='+encodeURIComponent(url);return `<div class="panel qr"><img src="${img}" alt="QR Code do Lagoinha Café"><div><h2>Faça o pedido pelo telemóvel</h2><p>Sem cadastro. Escolha seus produtos, informe seu nome e pague no caixa.</p><small>${E(url)}</small><p><button data-do="print">Imprimir QR Code</button></p></div></div>`;}
+function qr(){
+ const url=location.origin+location.pathname+'#/cliente';
+ return `<section class="panel qr-branding">
+  <div class="qr-brand-top"><span class="section-eyebrow">LAGOINHA CAFÉ POMBAL · IDENTIDADE OFICIAL</span><h2>Cartaz do QR Code</h2><p>Cartaz A4 em preto, creme e dourado, com a identidade do Café e um QR Code real para o cardápio.</p></div>
+  <div class="qr-brand-wrap">
+   <img class="qr-brand-poster" src="./assets/cartaz-qr.svg" alt="Cartaz Lagoinha Café Pombal com QR Code para fazer pedidos">
+   <div class="qr-brand-actions"><h3>Pronto para o balcão</h3><p>Imprima em A4, coloque junto ao Caixa e peça aos clientes para escanearem com a câmara do telemóvel.</p>
+    <p><button data-do="print" class="qr-print-btn">Imprimir cartaz A4</button></p>
+    <a class="qr-download-link" href="./assets/cartaz-qr.svg" target="_blank" rel="noopener">Abrir cartaz em alta qualidade ↗</a>
+    <p class="muted">Link do QR Code: <small>${E(url)}</small></p>
+   </div>
+  </div>
+ </section>`;
+}
 function add(x){
   if(S.cart.reduce((total,row)=>total+row.qty,0)+x.qty>20)throw Error('O limite é de 20 artigos por pedido');
   const old=S.cart.find(row=>row.kind===x.kind&&row.id===x.id&&row.food_id===x.food_id&&row.drink_id===x.drink_id);
