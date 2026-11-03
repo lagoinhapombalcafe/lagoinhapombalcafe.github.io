@@ -39,7 +39,20 @@ function loadAnalytics(month){
  });
 }
 async function loadOrders(){if(!S.role)return;const r=await api.from('orders').select('id,number,customer_name,order_day,created_at,paid_at,total_cents,status,payment_status,cafe_order_lines(item_name,detail,quantity)').order('created_at',{ascending:false}).limit(500);if(r.error)throw r.error;S.orders=r.data||[];if(S.role==='admin'){let ex=await api.from('cafe_expenses').select('*').order('expense_date',{ascending:false}).limit(500);if(ex.error)throw ex.error;S.expenses=ex.data||[];if(route()==='admin')await loadAnalytics(S.month||DAY().slice(0,7));}}
-async function loadTicket(){let token=location.hash.split('/')[2];if(!/^[\da-f-]{36}$/i.test(token||'')){S.ticket=null;return;}let r=await api.rpc('get_cafe_ticket_v2',{p_token:token});if(r.error)throw r.error;S.ticket=r.data;}
+async function loadTicket(){
+ let token=location.hash.split('/')[2];
+ if(!/^[\da-f-]{36}$/i.test(token||'')){S.ticket=null;return;}
+ const previousStatus=S.ticket?.status;
+ const r=await api.rpc('get_cafe_ticket_v2',{p_token:token});
+ if(r.error)throw r.error;
+ S.ticket=r.data;
+ if(S.ticket?.status==='ready'){
+   document.title='🔔 Pedido pronto! · Lagoinha Café';
+   if(previousStatus&&previousStatus!=='ready'&&navigator.vibrate)navigator.vibrate([150,90,150]);
+ }else{
+   document.title='Lagoinha Café · Acompanhar pedido';
+ }
+}
 async function loadReady(){let r=await api.rpc('get_cafe_ready_names_v1');if(r.error)throw r.error;S.ready=r.data||[];}
 async function work(job){if(S.busy)return;S.busy=true;try{await job();S.notice='';}catch(e){S.notice='Erro: '+(e.message||e);}finally{S.busy=false;paint();}}
 function cartAvailable(){
@@ -139,6 +152,7 @@ function ticket(){
    <h1 class="customer-ticket-name">${E(name||'Pedido recebido')}</h1>
    <p class="ticket-internal-ref">Referência do pedido · #${String(t.number).padStart(3,'0')}</p>
    <strong class="status">${E(states[t.status]||t.status)}</strong>
+   ${t.status==='ready'? `<div class="customer-ready-alert" role="alert" aria-live="assertive"><strong>🔔 ${E(name||'Seu pedido')}, está pronto!</strong><span>Pode dirigir-se ao balcão para levantar. Bom apetite!</span></div>`:''}
    <div class="ticket-items">${(t.lines||[]).map(x=>`<p>${x.quantity}× ${E(x.item_name)} ${E(x.detail||'')}</p>`).join('')}</div>
    <h3 class="ticket-total">${EUR(t.total_cents)}</h3>
    ${t.number>=9000?'<p class="test-note">🧪 PEDIDO DE TESTE — sem pagamento real.</p>':
