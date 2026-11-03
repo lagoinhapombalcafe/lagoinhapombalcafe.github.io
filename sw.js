@@ -1,4 +1,4 @@
-const CACHE='lagoinha-cafe-v3.14';
+const CACHE='lagoinha-cafe-v3.15';;
 const FILES=['./','./index.html','./v2.css','./app-v2.js','./config.js','./manifest.webmanifest','./assets/icon.svg','./assets/hero-cup.svg','./assets/logo-cafe.svg','./assets/logo-vertical.svg','./assets/qr-code.svg','./assets/cartaz-qr.svg'];
 self.addEventListener('install', event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
