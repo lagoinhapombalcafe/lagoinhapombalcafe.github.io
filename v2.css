@@ -485,3 +485,97 @@ button.ghost:hover:not(:disabled){background:#484037}
  body:has(.qr-branding) .qr-brand-wrap{padding:0!important;margin:0!important;border:0!important;width:210mm!important;max-width:none!important;display:block!important;box-shadow:none!important;background:#fff!important}
  body:has(.qr-branding) .qr-brand-poster{display:block!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;width:210mm!important;height:297mm!important;max-width:none!important;object-fit:fill!important;box-shadow:none!important}
 }
+
+
+/* Lagoinha Café v3.14 — revisão de proporções da identidade após teste real */
+.main-header{
+  display:flex!important; align-items:center!important;justify-content:space-between!important;
+  min-height:72px!important; height:auto!important;
+  padding:7px clamp(16px,3vw,44px)!important;
+  gap:18px!important;background:#110F0E!important;
+  border-bottom:1px solid #62452A!important; overflow:visible!important
+}
+.main-header .brand{
+  display:flex!important;align-items:center!important;
+  flex:0 0 214px!important;width:214px!important;min-width:0!important;
+  max-width:214px!important;overflow:visible!important
+}
+.main-header .brand-logo{
+  display:block!important;width:214px!important; height:57px!important;
+  max-width:214px!important;object-fit:contain!important;object-position:left center!important
+}
+.main-header nav{
+  display:flex!important;flex:1 1 auto!important;min-width:0!important;
+  align-items:center!important;justify-content:flex-end!important;
+  gap:4px!important;flex-wrap:nowrap!important;
+  overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;
+  scrollbar-width:thin;scrollbar-color:#775333 transparent
+}
+.main-header nav a{
+ display:inline-flex!important;align-items:center!important;white-space:nowrap!important;
+ font-size:13px!important;padding:9px 10px!important;
+ border-radius:9px;color:#EBDDCA!important
+}
+.main-header nav a:hover{background:#31251B!important;color:#F4D5A9!important}
+.client-hero{
+ background:
+  radial-gradient(ellipse at 81% 52%,rgba(120,68,28,.47),transparent 45%),
+  linear-gradient(118deg,#161311 6%,#211911 55%,#1A120D 100%)!important;
+ min-height:350px!important;
+ padding:44px 52px!important;
+ border:1px solid #6D4C2B!important;
+ overflow:hidden!important;
+ display:flex!important;align-items:center!important;
+}
+.client-hero-text{position:relative;z-index:2;max-width:65%!important}
+.client-hero h1{font-size:clamp(43px,5.1vw,70px)!important;line-height:1.13!important}
+.client-hero p{font-size:clamp(13px,1.3vw,17px)!important;max-width:600px}
+.hero-graphic{
+ position:absolute!important;top:50%!important;right:4%!important;
+ transform:translateY(-50%)!important;width:30%!important;height:280px!important;
+ min-width:210px!important;max-width:350px!important;
+ border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;opacity:.92!important
+}
+.hero-graphic .graphic-brand-logo{
+ display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ object-fit:contain!important;opacity:1!important;border-radius:0!important;filter:drop-shadow(0 14px 18px #0007)!important
+}
+.hero-graphic .graphic-sun{opacity:.12!important}
+.hero-graphic .graphic-ring{border-color:#BE91473E!important;opacity:.44!important}
+.qr-branding{background:linear-gradient(140deg,#2B1C12,#15110F)!important}
+.qr-brand-poster{
+ width:100%!important;max-width:440px!important;height:auto!important;
+ border:1px solid #947348!important;box-shadow:0 18px 45px #0009!important;
+ background:#110D0C
+}
+.qr-brand-wrap{grid-template-columns:minmax(220px,440px) minmax(250px,1fr)!important;gap:36px!important}
+.qr-brand-top{margin-bottom:18px}
+@media(max-width:1050px){
+ .main-header .brand{flex-basis:192px!important;width:192px!important;max-width:192px!important}
+ .main-header .brand-logo{width:192px!important;height:54px!important}
+ .main-header nav a{font-size:12px!important;padding:9px 7px!important}
+ .client-hero-text{max-width:67%!important}
+ .hero-graphic{right:0!important;width:30%!important;min-width:180px!important}
+}
+@media(max-width:760px){
+ .main-header{flex-wrap:wrap!important;row-gap:2px!important;min-height:0!important;padding:6px 14px!important}
+ .main-header .brand{flex:0 0 165px!important;width:165px!important;max-width:165px!important}
+ .main-header .brand-logo{width:165px!important;height:53px!important}
+ .main-header nav{flex:1 1 100%!important;justify-content:flex-start!important;max-width:100%!important;padding:2px 0 3px!important}
+ .main-header nav a{font-size:12px!important;padding:8px 11px!important}
+ .client-hero{min-height:300px!important;padding:32px 25px!important}
+ .client-hero-text{max-width:84%!important}
+ .hero-graphic{width:38%!important;min-width:150px!important;right:-8%!important;height:230px!important;opacity:.38!important}
+ .client-hero h1{font-size:clamp(37px,7vw,55px)!important}
+ .qr-brand-wrap{grid-template-columns:1fr!important;gap:22px!important}
+ .qr-brand-poster{max-width:430px!important;margin:0 auto}
+}
+@media(max-width:420px){
+ .client-hero-text{max-width:93%!important}
+ .hero-graphic{opacity:.22!important;right:-11%!important;min-width:130px!important}
+ .main-header nav a{font-size:11px!important}
+}
+@media print{
+ body:has(.qr-branding) .qr-brand-poster{width:210mm!important;height:297mm!important;max-width:none!important;object-fit:fill!important}
+}
