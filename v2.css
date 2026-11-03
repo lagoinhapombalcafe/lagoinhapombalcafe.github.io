@@ -979,3 +979,139 @@ footer{border-top:1px solid #6D513259;padding-top:16px;color:#B69C80!important}
 
 /* Em tablets de equipa, os acessos continuam deslocáveis sem desaparecer. */
 @media(max-width:650px){.main-header nav{justify-content:flex-start!important}.main-header nav a:first-child{margin-left:auto}}
+
+
+/* v3.18 — Identidade de cabeçalho compacta, proporcional e legível */
+.main-header{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  flex-wrap:nowrap!important;
+  gap:17px!important;
+  min-height:71px!important;
+  height:auto!important;
+  padding:8px clamp(14px,3.1vw,38px)!important;
+  background:linear-gradient(105deg,#15100d,#100d0b 72%,#1c120e)!important;
+  border:0!important;
+  border-bottom:1px solid #92683d!important;
+  box-shadow:0 6px 22px #0006!important;
+}
+.main-header .brand{
+  display:flex!important;
+  flex:0 0 229px!important;
+  width:229px!important;
+  min-width:0!important;
+  max-width:229px!important;
+  height:54px!important;
+  padding:0!important;
+  margin:0!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  line-height:1!important;
+  overflow:visible!important;
+}
+.main-header .brand .brand-logo{
+  display:block!important;
+  box-sizing:content-box!important;
+  width:222px!important;
+  height:53px!important;
+  max-width:100%!important;
+  max-height:53px!important;
+  object-fit:contain!important;
+  object-position:left center!important;
+  filter:none!important;
+}
+.main-header nav{
+  flex:1 1 auto!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  flex-wrap:nowrap!important;
+  min-width:0!important;
+  width:auto!important;
+  max-width:none!important;
+  gap:4px!important;
+  padding:0!important;
+  margin:0!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scrollbar-width:none!important;
+}
+.main-header nav::-webkit-scrollbar{display:none}
+.main-header nav a{
+  flex:0 0 auto!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:12px!important;
+  letter-spacing:.1px!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+  padding:11px 12px!important;
+  border-radius:10px!important;
+  color:#f4dfbf!important;
+  white-space:nowrap!important;
+  background:transparent!important;
+  min-height:40px!important;
+  margin:0!important;
+}
+.main-header nav a:hover,.main-header nav a:focus-visible{
+  background:#3d2b1b!important;
+  color:#fff4df!important;
+}
+@media(max-width:700px){
+  .main-header{
+    min-height:59px!important;
+    max-height:66px!important;
+    padding:6px 11px!important;
+    gap:7px!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+  }
+  .main-header .brand{
+    flex:0 0 171px!important;
+    width:171px!important;
+    max-width:171px!important;
+    min-width:0!important;
+    height:47px!important;
+  }
+  .main-header .brand .brand-logo{
+    width:168px!important;
+    max-width:168px!important;
+    height:45px!important;
+    max-height:45px!important;
+  }
+  .main-header nav{
+    flex:0 1 auto!important;
+    justify-content:flex-end!important;
+    gap:4px!important;
+    max-width:calc(100% - 178px)!important;
+    width:auto!important;
+    overflow:visible!important;
+    padding:0!important;
+    margin:0!important;
+  }
+  .main-header nav a{
+    font-size:11px!important;
+    padding:9px 10px!important;
+    min-height:36px!important;
+    border:1px solid #72502e!important;
+    background:#261b12!important;
+    border-radius:9px!important;
+  }
+  .main-header nav .nav-staff-direct{display:none!important}
+  .main-header nav a:first-child{margin-left:0!important}
+  .wrap{margin-top:12px!important}
+}
+@media(max-width:370px){
+  .main-header .brand{
+    flex-basis:151px!important;width:151px!important;max-width:151px!important
+  }
+  .main-header .brand .brand-logo{
+    width:148px!important;max-width:148px!important;height:42px!important
+  }
+  .main-header nav{max-width:calc(100% - 158px)!important;gap:3px!important}
+  .main-header nav a{font-size:10px!important;padding:8px 8px!important}
+}
