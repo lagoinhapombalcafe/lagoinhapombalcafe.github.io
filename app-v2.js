@@ -1,5 +1,5 @@
 import {CONFIG} from './config.js';
-import * as MX from './marmitex.js?v=4.0';
+import * as MX from './marmitex.js?v=4.2';
 const $=s=>document.querySelector(s), root=$('#app');
 const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',editProduct:null,editCombo:null,month:'',analytics:null,analyticsError:'',busy:false,notice:'',checkoutOpen:false,customerName:'',loginEmail:''};
 let api;
@@ -13,8 +13,8 @@ const valid=x=>x&&x.active&&(x.stock_qty===null||x.stock_qty>0);
 const getDate=x=>new Date(x).toLocaleTimeString('pt-PT',{timeZone:'Europe/Lisbon',hour:'2-digit',minute:'2-digit'});
 const states={awaiting_payment:'Aguarda pagamento',queued:'Na fila',preparing:'Em preparação',ready:'Pronto',delivered:'Entregue',cancelled:'Cancelado'};
 const alert=()=>S.notice?`<p class="alert">${E(S.notice)} <button class="small" data-do="dismiss">×</button></p>`:'';
-const header=(title,sub)=>`<section class="hero"><div><span class="eyebrow">LAGOINHA POMBAL · DOMINGOS 9H–10H</span><h1>${title}</h1><p>${sub}</p></div><img src="./assets/icon.svg" class="hero-brand-icon" alt="" aria-hidden="true"></section>`;
-const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente" aria-label="Lagoinha Café Pombal — ir para o cardápio"><img class="brand-logo" src="./assets/logo-aprovada.webp" alt="Lagoinha Pombal Café" width="190" height="56" decoding="async"></a><nav aria-label="Navegação principal"><a href="#/cliente" class="nav-main-link">Cliente</a><a href="#/equipa" class="nav-main-link">Equipa</a>${S.role==="admin"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a><a class="nav-staff-direct" href="#/cozinha">Cozinha</a><a class="nav-staff-direct" href="#/admin">Administrador</a>`:S.role==="cashier"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a class="nav-staff-direct" href="#/cozinha">Cozinha</a>`:''}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Pombal · Rua Prof. Veiga Simão, nº 4 · Pedidos presenciais</footer>`;
+const header=(title,sub)=>`<section class="hero"><div><span class="eyebrow">LAGOINHA CAFÉ · DOMINGOS 9H–10H</span><h1>${title}</h1><p>${sub}</p></div><img src="./assets/icon.svg" class="hero-brand-icon" alt="" aria-hidden="true"></section>`;
+const shell=(content,fullscreen=false)=>fullscreen?content:`<header class="main-header"><a class="brand" href="#/cliente" aria-label="Lagoinha Café — ir para o cardápio"><img class="brand-logo" src="./assets/logo-lagoinha-cafe.svg" alt="Lagoinha Café" width="190" height="56" decoding="async"></a><nav aria-label="Navegação principal"><a href="#/cliente" class="nav-main-link">Cliente</a><a href="#/equipa" class="nav-main-link">Equipa</a>${S.role==="admin"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a><a class="nav-staff-direct" href="#/cozinha">Cozinha</a><a class="nav-staff-direct" href="#/admin">Administrador</a>`:S.role==="cashier"?`<a class="nav-staff-direct" href="#/caixa">Caixa</a>`:S.role==="kitchen"?`<a class="nav-staff-direct" href="#/cozinha">Cozinha</a>`:''}</nav></header><main class="wrap">${alert()}${content}</main><footer>Lagoinha Café · Rua Prof. Veiga Simão, nº 4 · Pombal · Pedidos presenciais</footer>`;
 function paint(){let r=route(),body;
 if(['marmitex','marmitex-pedido','marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(r))body=['marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(r)&&!allowed(r)?login(r):MX.mxRender(r,S.role);
 else if(r==='cliente')body=menu();
@@ -113,7 +113,7 @@ function menu(){
   const comboCards=combos.map(c=>`<button type="button" class="combo-option ${chosen?.id===c.id?'current':''}" data-do="combo" data-id="${E(c.id)}" aria-pressed="${chosen?.id===c.id}"><span class="combo-symbol">✦</span><span class="combo-text"><strong>${E(c.name)}</strong><small>${E(c.description||'Um alimento e uma bebida')}</small></span><span class="combo-price">${EUR(c.price_cents)}</span></button>`).join('');
   const unitCards=singles.map(p=>`<article class="unit-card"><span class="unit-art">${productIconMarkup(p.icon||'🍽️')}</span><span class="unit-info"><strong>${E(p.name)}</strong><small>${p.category==='drink'?'Bebida':'Alimento'} · ${EUR(p.price_cents)}</small></span><button type="button" class="unit-add" data-do="add-unit" data-id="${E(p.id)}" aria-label="Adicionar ${E(p.name)} ao pedido">＋</button></article>`).join('');
   return `<section class="client-hero">
-    <div class="client-hero-text"><span class="hero-kicker"><span class="hero-dot"></span> LAGOINHA POMBAL · DOMINGOS 9H–10H</span>
+    <div class="client-hero-text"><span class="hero-kicker"><span class="hero-dot"></span> LAGOINHA CAFÉ · DOMINGOS 9H–10H</span>
       <h1>Seu café.<br><em>Seu momento.</em></h1>
       <p>Escolha o que mais gosta, monte seu pedido e aproveite a comunhão. Simples assim.</p>
       <div class="hero-pills"><span>✓ Sem cadastro</span><span>✓ Pague no balcão</span></div>
@@ -170,7 +170,7 @@ function ticket(){
  </div>`;
 }
 function pickup(){
- return `<div class="pickup"><header class="pickup-branded-header"><img src="./assets/logo-aprovada.webp" alt="Lagoinha Café Pombal"></header>
+ return `<div class="pickup"><header class="pickup-branded-header"><img src="./assets/logo-lagoinha-cafe.svg" alt="Lagoinha Café"></header>
  <h1>PEDIDOS PRONTOS</h1>
  <section>${S.ready.length?S.ready.map(x=>`<b class="pickup-name">${E(x.customer_name||'Cliente')}<small class="pickup-ref">REF. ${String(x.number).padStart(3,'0')}</small></b>`).join(''):'<p>Aguardando os próximos pedidos.</p>'}</section>
  <p>Quando vir o seu nome, dirija-se ao balcão de retirada.</p>
@@ -417,9 +417,9 @@ function financePanel(){const month=S.month||DAY().slice(0,7),paid=S.orders.filt
 function qr(){
  const url=location.origin+location.pathname+'#/cliente';
  return `<section class="panel qr-branding">
-  <div class="qr-brand-top"><span class="section-eyebrow">LAGOINHA CAFÉ POMBAL · IDENTIDADE OFICIAL</span><h2>Cartaz do QR Code</h2><p>Cartaz A4 em preto, creme e dourado, com a identidade do Café e um QR Code real para o cardápio.</p></div>
+  <div class="qr-brand-top"><span class="section-eyebrow">LAGOINHA CAFÉ · IDENTIDADE OFICIAL</span><h2>Cartaz do QR Code</h2><p>Cartaz A4 em preto, creme e dourado, com a identidade do Café e um QR Code real para o cardápio.</p></div>
   <div class="qr-brand-wrap">
-   <img class="qr-brand-poster" src="./assets/cartaz-qr.svg" alt="Cartaz Lagoinha Café Pombal com QR Code para fazer pedidos">
+   <img class="qr-brand-poster" src="./assets/cartaz-qr.svg" alt="Cartaz Lagoinha Café com QR Code para fazer pedidos">
    <div class="qr-brand-actions"><h3>Pronto para o balcão</h3><p>Imprima em A4, coloque junto ao Caixa e peça aos clientes para escanearem com a câmara do telemóvel.</p>
     <p><button data-do="print" class="qr-print-btn">Imprimir cartaz A4</button></p>
     <a class="qr-download-link" href="./assets/cartaz-qr.svg" target="_blank" rel="noopener">Abrir cartaz em alta qualidade ↗</a>
