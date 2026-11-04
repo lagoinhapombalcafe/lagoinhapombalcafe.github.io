@@ -249,6 +249,12 @@ function kitchenBoard(day,paid){
   <div class="kitchen-board-foot"><span>✓ Cada pedido é independente. Pode preparar 2, 3 ou mais em simultâneo.</span><a href="#/retirada">Ecrã de retirada</a></div>
  </section>`;
 }
+function cashierAreaLinks(){
+ return `<nav class="cashier-area-switch" aria-label="Escolher caixa">
+ <a href="#/caixa" class="cashier-area-link is-active" aria-current="page"><span aria-hidden="true">☕</span><span><strong>Caixa do Café</strong><small>Pedidos e pagamentos do café</small></span></a>
+ <a href="./marmitex.html#/marmitex-caixa" class="cashier-area-link"><span aria-hidden="true">🍱</span><span><strong>Encomendas de Marmitex</strong><small>Lista, pagamentos e retiradas</small></span></a>
+ </nav>`;
+}
 function queue(who){
  const day=S.orders.filter(o=>o.order_day===DAY());
  const paid=day.filter(o=>o.payment_status==='paid');
@@ -256,6 +262,7 @@ function queue(who){
  const pending=day.filter(o=>o.payment_status==='pending'&&o.status==='awaiting_payment').sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
  const cards=pending.map(o=>orderCard(o,o.number>=9000?[['paid','Simular pagamento']]:[['paid','Confirmar pagamento'],['cancel','Cancelar']]));
  return header('Caixa','Confirme os pagamentos. Cada pedido pago vai diretamente para os tablets da cozinha.')+
+  cashierAreaLinks()+
   `<div class="metrics"><div>Aguardam pagamento<b>${pending.length}</b></div><div>Pedidos pagos<b>${paid.length}</b></div><div>Total recebido<b>${EUR(paid.filter(o=>o.number<9000).reduce((x,o)=>x+o.total_cents,0))}</b></div></div>`+
   `<div class="panel cashier-tablet"><div class="panel-head"><h2>Pedidos a receber</h2><button class="small ghost" data-do="refresh">Atualizar ↻</button></div><div class="orders cashier-card-grid">${cards.join('')||'<p class="muted">Nenhum pedido a aguardar pagamento.</p>'}</div></div>`+
   '<p class="muted">Depois de confirmar o pagamento, o pedido sai do Caixa. A Cozinha trata da preparação e finaliza em <strong>Pronto</strong>.</p>';
