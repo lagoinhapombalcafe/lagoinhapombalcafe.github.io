@@ -15,9 +15,10 @@ function paint(){
  const r=route();
  const main=staffRoute(r)&&!permitted(r)?login(r):MX.mxRender(r,role);
  const caixaNav=staffRoute(r)&&['admin','cashier'].includes(role)?'<a href="#/marmitex-caixa" '+(r==='marmitex-caixa'?'aria-current="page"':'')+'>Caixa</a>':'';
+ const cashierSections=r==='marmitex-caixa'&&permitted(r)?'<nav class="cashier-area-switch" aria-label="Escolher caixa"><a class="cashier-area-link" href="./#/caixa"><span aria-hidden="true">☕</span><span><strong>Caixa do Café</strong><small>Pedidos e pagamentos do café</small></span></a><a class="cashier-area-link is-active" href="#/marmitex-caixa" aria-current="page"><span aria-hidden="true">🍱</span><span><strong>Encomendas de Marmitex</strong><small>Lista, pagamentos e retiradas</small></span></a></nav>':'';
  root.innerHTML='<header class="mxt-header"><div class="mxt-header-inner"><a class="mxt-brand" href="#/marmitex" aria-label="Marmitex Lagoinha Café"><img class="mxt-header-logo" src="./assets/logo-lagoinha-cafe-header.svg?v=4.7" width="112" height="112" decoding="async" alt="Lagoinha Café"><span class="mxt-brand-words mxt-subbrand"><em>MARMITEX</em></span></a>'+
  '<nav class="mxt-nav" aria-label="Acessos"><a href="#/marmitex" '+(r==='marmitex'||r==='marmitex-pedido'?'aria-current="page"':'')+'>Encomendar</a>'+caixaNav+'</nav></div></header>'+
- '<main class="mxt-main">'+(notice?'<p role="alert" class="mx-notice">'+safe(notice)+'</p>':'')+main+'</main>'+
+ '<main class="mxt-main">'+cashierSections+(notice?'<p role="alert" class="mx-notice">'+safe(notice)+'</p>':'')+main+'</main>'+
  '<footer class="mxt-footer"><strong>Lagoinha Café · Marmitex</strong><span>Encomendas antecipadas · Retirada no domingo</span>'+
  (user?'<button type="button" data-op="logout">Sair da conta</button>':'')+'</footer>';
  document.title=(r==='marmitex-caixa'?'Caixa · ':r==='marmitex-admin'?'Administração · ':r==='marmitex-pedido'?'Comprovativo · ':'Encomendas · ')+'Marmitex Lagoinha Café';
