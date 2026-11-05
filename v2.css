@@ -1382,3 +1382,19 @@ footer{border-top:1px solid #6D513259;padding-top:16px;color:#B69C80!important}
 .stock-number.positive{color:#9bd79f}.stock-number.negative{color:#ffc28a}
 @media(max-width:920px){.stock-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stock-columns{grid-template-columns:1fr}}
 @media(max-width:620px){.stock-hero{flex-direction:column;align-items:stretch;padding:17px}.stock-hero label{width:100%}.stock-panel{padding:15px}.stock-form-pair{grid-template-columns:1fr}.stock-stats{gap:8px}.stock-stats>div{padding:12px}.stock-stats strong{font-size:21px}.stock-panel-top{flex-wrap:wrap}}
+
+
+/* V5.1 — visibilidade de reservas por produto e encomendas semanais */
+.stock-reservation-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 18px}
+.stock-reservation-summary>div{padding:18px 20px;border-radius:16px;border:1px solid #986b3d;background:linear-gradient(125deg,#392717,#241b17)}
+.stock-reservation-summary span{display:block;color:#e3c79e;font-size:13px;font-weight:750}
+.stock-reservation-summary strong{display:block;color:#fbe3b3;font-size:clamp(22px,3vw,32px);margin:6px 0 3px}
+.stock-reservation-summary small{color:#b8a186;font-size:12px;line-height:1.4}
+.stock-reservation-table{min-width:690px}
+.stock-reserved{display:inline-flex;white-space:nowrap;align-items:center;justify-content:center;min-width:58px;border:1px solid #63513d;border-radius:8px;padding:6px 10px;background:#352b23;color:#ead0aa;font-weight:850}
+.stock-reserved.has-reservations{border-color:#a97d3f;background:#60421f;color:#ffe1aa}
+.stock-weekly{margin-top:0}
+.stock-weekly-table{min-width:750px}
+.stock-weekly-table td strong{color:#fce1ac}
+.stock-weekly-link{display:inline-flex;flex-shrink:0;padding:10px 14px;border:1px solid #d8a667;border-radius:9px;text-decoration:none!important;color:#f7d5a1!important;font-size:12px;font-weight:800;background:#49301c}
+@media(max-width:620px){.stock-reservation-summary{grid-template-columns:1fr;gap:9px}.stock-reservation-summary>div{padding:14px 16px}.stock-weekly-link{font-size:11px}}
