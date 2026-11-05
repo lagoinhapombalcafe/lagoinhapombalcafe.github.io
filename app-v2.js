@@ -1,7 +1,8 @@
 import {CONFIG} from './config.js';
 import * as MX from './marmitex.js?v=4.6';
+import * as ST from './stock.js?v=5.0';
 const $=s=>document.querySelector(s), root=$('#app');
-const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',editProduct:null,editCombo:null,month:'',analytics:null,analyticsError:'',busy:false,notice:'',checkoutOpen:false,customerName:'',loginEmail:''};
+const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',editProduct:null,editCombo:null,month:'',analytics:null,analyticsError:'',stockMonth:'',busy:false,notice:'',checkoutOpen:false,customerName:'',loginEmail:''};
 let api;
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const EUR=n=>(Number(n||0)/100).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
@@ -330,7 +331,7 @@ function analyticsPanel(){
    <div class="analytics-foot"><small>Os pedidos de teste não entram nos gráficos. Os valores representam pagamentos confirmados, antes de descontar despesas.</small><button class="small ghost" data-do="refresh-stats">Atualizar gráficos ↻</button></div>
  </section>`;
 }
-function admin(){let opts=[['visao','Resumo'],['estatisticas','Gráficos'],['produtos','Individuais'],['combos','Combos'],['marmitex','Marmitex'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='estatisticas'?analyticsPanel():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():S.tab==='marmitex'?marmitexAdminPanel():qr()}`;}
+function admin(){let opts=[['visao','Resumo'],['estatisticas','Gráficos'],['produtos','Individuais'],['combos','Combos'],['marmitex','Marmitex'],['estoque','Estoque'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='estatisticas'?analyticsPanel():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():S.tab==='marmitex'?marmitexAdminPanel():S.tab==='estoque'?ST.render(S.products,S.stockMonth):qr()}`;}
 function marmitexAdminPanel(){
  return `<section class="admin-marmitex" aria-label="Cadastro e gestão de marmitex">
  <div class="admin-marmitex-intro"><div><strong>Cadastro de Marmitex</strong><p>Configure os domingos, cadastre pratos, preços e quantidades. As encomendas e o caixa das marmitex são independentes das vendas do café.</p></div><a href="./marmitex.html" target="_blank" rel="noopener noreferrer">Ver página de encomendas ↗</a></div>
@@ -578,7 +579,9 @@ if(k==='order'||k==='kitchen-start'){
  }
  return;
 }
-if(k==='tab'){S.tab=b.dataset.tab;if(S.tab==='marmitex')await MX.mxLoad(api,'marmitex-admin');paint();return;}
+if(k==='tab'){S.tab=b.dataset.tab;if(S.tab==='marmitex')await MX.mxLoad(api,'marmitex-admin');if(S.tab==='estoque')await ST.load(api,S.stockMonth||DAY().slice(0,7));paint();if(S.tab==='estoque')ST.updateForm(root);return;}
+if(k==='stock-refresh'){await Promise.all([loadCatalog(),ST.load(api,S.stockMonth||DAY().slice(0,7))]);paint();ST.updateForm(root);return;}
+if(k==='stock-export'){ST.exportCsv();return;}
 if(k==='refresh-stats'){await loadAnalytics(S.month||DAY().slice(0,7));paint();return;}
 if(k==='edit-product'){S.editProduct=id||null;paint();return;}
 if(k==='edit-combo'){S.editCombo=id||null;paint();return;}
@@ -587,9 +590,13 @@ if(k==='delete-expense'){if(!confirm('Excluir despesa?'))return;let r=await api.
 if(k==='csv'){csv();return;}if(k==='print'){window.print();return;}
 }catch(ex){S.busy=false;S.notice='Erro: '+ex.message;paint();}});
 root.addEventListener('input',e=>{if(e.target?.id==='product-icon-input')updateProductIconSelection();});
-root.addEventListener('change',e=>{let t=e.target;if(MX.mxChange(t)){paint();return;}if(t.id==='food')S.food=t.value;if(t.id==='drink')S.drink=t.value;if(t.id==='qty')S.qty=Math.max(1,Math.min(20,Number(t.value)||1));if(t.id==='month'){S.month=t.value;S.analytics=null;paint();loadAnalytics(S.month).then(()=>paint()).catch(ex=>{S.analyticsError=ex.message;paint();});}
+root.addEventListener('change',e=>{let t=e.target;
+if(t.id==='stock-kind'||t.id==='stock-product'){ST.updateForm(root);return;}
+if(t.id==='stock-month'){S.stockMonth=t.value;ST.load(api,S.stockMonth).then(()=>{paint();ST.updateForm(root);}).catch(ex=>{S.notice='Erro no estoque: '+ex.message;paint();});return;}
+if(MX.mxChange(t)){paint();return;}if(t.id==='food')S.food=t.value;if(t.id==='drink')S.drink=t.value;if(t.id==='qty')S.qty=Math.max(1,Math.min(20,Number(t.value)||1));if(t.id==='month'){S.month=t.value;S.analytics=null;paint();loadAnalytics(S.month).then(()=>paint()).catch(ex=>{S.analyticsError=ex.message;paint();});}
 if(t.id==='stats-month'){S.month=t.value;S.analytics=null;S.analyticsError='';paint();loadAnalytics(S.month).then(()=>paint()).catch(ex=>{S.analyticsError=ex.message;paint();});}});
-root.addEventListener('submit',e=>{e.preventDefault();let f=e.target,formId=f.getAttribute('id');if(formId==='productForm'){saveProductForm();return;}if(formId&&formId.startsWith('mx-')){if(MX.mxBusy())return;MX.mxSubmit(api,f,route(),S.role).catch(ex=>MX.mxSetError(ex.message||ex)).finally(()=>paint());return;}let d=new FormData(f);if(formId==='checkout-name-form'){submitNamedOrder(d);return;}(async()=>{S.busy=true;
+root.addEventListener('submit',e=>{e.preventDefault();let f=e.target,formId=f.getAttribute('id');if(formId==='productForm'){saveProductForm();return;}
+if(formId==='stock-movement-form'){if(S.role!=='admin')return;S.busy=true;ST.submit(api,f).then(()=>Promise.all([loadCatalog(),loadOrders(),ST.load(api,S.stockMonth||DAY().slice(0,7))])).then(()=>{S.notice='Movimento de estoque guardado com sucesso.';}).catch(ex=>{S.notice='Erro no estoque: '+(ex.message||ex);}).finally(()=>{S.busy=false;paint();ST.updateForm(root);});return;}if(formId&&formId.startsWith('mx-')){if(MX.mxBusy())return;MX.mxSubmit(api,f,route(),S.role).catch(ex=>MX.mxSetError(ex.message||ex)).finally(()=>paint());return;}let d=new FormData(f);if(formId==='checkout-name-form'){submitNamedOrder(d);return;}(async()=>{S.busy=true;
 if(formId==='login'){S.loginEmail=String(d.get('email')||'').trim();let r=await api.auth.signInWithPassword({email:S.loginEmail,password:String(d.get('password'))});if(r.error)throw Error(r.error.message?.includes('Invalid login credentials')?'Email ou palavra-passe incorretos. Verifique a conta ou redefina a palavra-passe no Supabase.':r.error.message);await auth();if(!S.role)throw Error('Conta sem autorização de equipa');S.loginEmail='';const destination=S.role==='kitchen'?'cozinha':S.role==='cashier'?'caixa':'admin';if(!allowed(route()))location.hash='#/'+destination;await loadOrders();if(route().startsWith('marmitex-'))await MX.mxLoad(api,route());}
 if(formId==='comboForm'){let stock=String(d.get('stock')).trim(),data={name:String(d.get('name')).trim(),description:String(d.get('description')).trim(),price_cents:Math.round(Number(d.get('price'))*100),stock_qty:stock===''?null:Number(stock),sort_order:Number(d.get('sort'))||0,active:d.get('active')==='true'};if(!Number.isInteger(data.price_cents)||data.price_cents<1||(data.stock_qty!==null&&(!Number.isInteger(data.stock_qty)||data.stock_qty<0)))throw Error('Preço ou estoque inválido');let id=String(d.get('id')||'');
 const req=id?api.from('cafe_combos').update(data).eq('id',id):api.from('cafe_combos').insert(data);
@@ -600,7 +607,7 @@ S.editCombo=null;
 await loadCatalog();}
 if(formId==='expenseForm'){let cents=Math.round(Number(d.get('amount'))*100);if(cents<1)throw Error('Valor inválido');let r=await api.from('cafe_expenses').insert({expense_date:d.get('date'),description:String(d.get('description')).trim(),category:String(d.get('category')),amount_cents:cents,created_by:S.user.id});if(r.error)throw r.error;await loadOrders();}
 })().then(()=>{S.notice='Registo guardado com sucesso.';S.busy=false;paint();}).catch(ex=>{S.notice='Erro: '+ex.message;S.busy=false;paint();});});
-async function sync(){try{let r=route();if(r==='cliente')await loadCatalog();else if(r==='pedido')await loadTicket();else if(r==='retirada')await loadReady();else if(['caixa','cozinha','admin'].includes(r)&&S.role){await loadOrders();if(r==='admin'&&S.tab==='marmitex')await MX.mxLoad(api,'marmitex-admin');}else if(['marmitex','marmitex-pedido'].includes(r)||(['marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(r)&&allowed(r)))await MX.mxLoad(api,r);paint();}catch(e){S.notice=e.message;paint();}}
+async function sync(){try{let r=route();if(r==='cliente')await loadCatalog();else if(r==='pedido')await loadTicket();else if(r==='retirada')await loadReady();else if(['caixa','cozinha','admin'].includes(r)&&S.role){await loadOrders();if(r==='admin'&&S.tab==='marmitex')await MX.mxLoad(api,'marmitex-admin');if(r==='admin'&&S.tab==='estoque')await ST.load(api,S.stockMonth||DAY().slice(0,7));}else if(['marmitex','marmitex-pedido'].includes(r)||(['marmitex-caixa','marmitex-cozinha','marmitex-admin'].includes(r)&&allowed(r)))await MX.mxLoad(api,r);paint();}catch(e){S.notice=e.message;paint();}}
 function mxLegacyRedirect(){const hash=location.hash.replace('#/marmitex-cozinha','#/marmitex-caixa');location.replace('./marmitex.html'+hash);}
 window.addEventListener('hashchange',()=>{if(route().startsWith('marmitex'))mxLegacyRedirect();else sync();});
 // Ao regressar ao pedido (inclusive após desbloquear o telemóvel), recuperar o estado imediatamente.
