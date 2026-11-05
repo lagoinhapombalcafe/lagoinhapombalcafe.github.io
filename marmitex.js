@@ -80,8 +80,12 @@ function mxStaffOrders(){
  const paid=orders.filter(o=>o.payment_status==='paid'&&o.status!=='delivered');
  const delivered=orders.filter(o=>o.status==='delivered');
  const received=orders.filter(o=>o.payment_status==='paid').reduce((n,o)=>n+o.total_cents,0);
- const qty=new Map();
- for(const o of orders)for(const l of o.items||[])qty.set(l.name,(qty.get(l.name)||0)+Number(l.quantity));
+ const qty=new Map(),awaitingQty=new Map(),deliveredQty=new Map();
+ for(const o of orders)for(const l of o.items||[]){
+  qty.set(l.name,(qty.get(l.name)||0)+Number(l.quantity));
+  const into=o.status==='delivered'?deliveredQty:awaitingQty;
+  into.set(l.name,(into.get(l.name)||0)+Number(l.quantity));
+ }
  const weeks=dash.weeks||[];
  const picker='<label class="mx-field mx-week-picker">Domingo de retirada<select id="mx-week-select">'+weeks.map(w=>'<option value="'+mxEsc(w.id)+'" '+(wk&&w.id===wk.id?'selected':'')+'>'+mxEsc(mxFormatDate(w.pickup_date))+'</option>').join('')+'</select></label>';
  const list=orders.sort((a,b)=>{
@@ -104,7 +108,7 @@ function mxStaffOrders(){
  }).join('');
  return '<section class="mx-hero"><div class="mx-kicker">MARMITEX · ATENDIMENTO</div><h1>Caixa e <em>retirada.</em></h1><p>Localize o nome, receba o pagamento e entregue a marmitex. Não existe etapa de cozinha neste sistema.</p></section>'+mxStaffNav()+mxMsg()+
  (wk?'<section class="mx-panel">'+picker+'<div class="mx-stats"><div><small>Encomendas</small><b>'+orders.length+'</b></div><div><small>Por pagar</small><b>'+pending.length+'</b></div><div><small>Entregues</small><b>'+delivered.length+'</b></div><div><small>Recebido</small><b>'+mxEUR(received)+'</b></div></div>'+
- '<h2>Quantidades encomendadas</h2><div class="mx-production">'+([...qty.entries()].map(([name,num])=>'<div><span>'+mxEsc(name)+'</span><b>'+num+' un.</b></div>').join('')||'<p>Sem encomendas para este domingo.</p>')+'</div>'+
+ '<h2>Reservas por prato</h2><p class="mx-footnote">Total encomendado inclui pratos já entregues; “Por retirar” indica o que ainda precisa de estar separado.</p><div class="mx-production">'+([...qty.entries()].map(([name,num])=>'<div><span>'+mxEsc(name)+'</span><b>'+num+' encomendadas · '+(awaitingQty.get(name)||0)+' por retirar · '+(deliveredQty.get(name)||0)+' entregues</b></div>').join('')||'<p>Sem encomendas para este domingo.</p>')+'</div>'+
  '<h2>Encomendas e retiradas</h2><div class="mx-order-grid">'+(list||'<p class="mx-empty">Nenhuma encomenda registada.</p>')+'</div></section>':
  '<section class="mx-panel mx-centered"><h2>Aguardando cardápio semanal</h2><p>O Administrador pode configurar as semanas no painel de gestão.</p></section>');
 }
@@ -118,9 +122,21 @@ function mxAdmin(){
  const total=orders.reduce((s,o)=>s+o.total_cents,0);
  const paid=orders.filter(o=>o.payment_status==='paid').reduce((s,o)=>s+o.total_cents,0);
  const dates=(dash.weeks||[]).map(w=>'<option value="'+mxEsc(w.id)+'" '+(wk&&w.id===wk.id?'selected':'')+'>'+mxEsc(mxFormatDate(w.pickup_date))+'</option>').join('');
+ const toDeliver=new Map(),done=new Map();
+ for(const o of orders)for(const l of o.items||[]){
+  const target=o.status==='delivered'?done:toDeliver;
+  target.set(String(l.item_id),(target.get(String(l.item_id))||0)+Number(l.quantity||0));
+ }
+ const alreadyReserved=items.reduce((n,i)=>n+Number(i.reserved_qty||0),0);
+ const notDelivered=items.reduce((n,i)=>n+(toDeliver.get(String(i.id))||0),0);
+ const reservationOverview=wk?'<section class="mx-panel mx-reservation-overview"><div class="mx-panel-head"><div><h2>Reservas da semana</h2><p class="mx-footnote">Quantidades confirmadas para '+mxEsc(mxFormatDate(wk.pickup_date))+'. Esta é uma lista independente do estoque do café.</p></div></div>'+
+ '<div class="mx-reservation-kpis"><div><span>Já encomendadas</span><strong>'+alreadyReserved+'</strong></div><div><span>Ainda por entregar</span><strong>'+notDelivered+'</strong></div><div><span>Já entregues</span><strong>'+(alreadyReserved-notDelivered)+'</strong></div></div>'+
+ '<div class="mx-reservation-scroll"><table class="mx-reservation-table"><thead><tr><th>Prato</th><th>Reservadas</th><th>Por retirar</th><th>Entregues</th><th>Ainda disponíveis</th></tr></thead><tbody>'+
+ items.map(i=>{const n=Number(i.reserved_qty||0),pending=toDeliver.get(String(i.id))||0,delivered=done.get(String(i.id))||0,remaining=i.capacity===null?'Sem limite':Math.max(0,Number(i.capacity)-n)+' un.';return '<tr><td><strong>'+mxEsc(i.name)+'</strong></td><td><b class="mx-reserved-count">'+n+'</b></td><td><b>'+pending+'</b></td><td>'+delivered+'</td><td>'+remaining+'</td></tr>';}).join('')+
+ '</tbody></table></div><p class="mx-footnote">As reservas são contabilizadas ao fazer a encomenda e devolvidas ao cancelar. Entregar não liberta a vaga da semana.</p></section>':'';
  return '<section class="mx-hero"><div class="mx-kicker">ADMINISTRADOR · ENCOMENDAS SEMANAIS</div><h1>Gestão de <em>Marmitex.</em></h1><p>Defina o domingo, o prazo para encomendar e os pratos. Só abra quando os preços e as quantidades estiverem corretos.</p></section>'+mxStaffNav()+mxMsg()+
  '<div class="mx-qr-admin"><a href="./marmitex-qr.html" target="_blank" rel="noopener">◼ Ver e imprimir QR Code exclusivo das marmitex ↗</a></div>'+ 
- '<section class="mx-admin-grid"><div class="mx-panel"><h2>1 · Configurar domingo</h2><p class="mx-footnote">Confira o prazo de encerramento configurado para esta semana. Abra as encomendas somente quando o cardápio estiver pronto.</p>'+
+ reservationOverview+'<section class="mx-admin-grid"><div class="mx-panel"><h2>1 · Configurar domingo</h2><p class="mx-footnote">Confira o prazo de encerramento configurado para esta semana. Abra as encomendas somente quando o cardápio estiver pronto.</p>'+
  '<form id="mx-week-form"><label class="mx-field">Domingo de retirada<input name="pickup_date" type="date" required value="'+mxEsc(date)+'"></label>'+
  '<label class="mx-field">Prazo final para encomendar<input name="cutoff_local" type="datetime-local" required value="'+mxEsc(deadline)+'"></label>'+
  '<label class="mx-field">Informações de retirada<input name="pickup_note" maxlength="180" value="'+mxEsc(wk?.pickup_note||'Retirada no domingo na igreja')+'"></label>'+
@@ -137,7 +153,7 @@ function mxAdmin(){
  '<label class="mx-check"><input name="active" type="checkbox" '+(!editing||editing.active?'checked':'')+'> Prato ativo</label>'+
  '<button type="submit" class="mx-primary" '+(M.busy?'disabled':'')+'>'+(editing?'Guardar alterações':'Adicionar prato')+'</button>'+
  (editing?'<button type="button" class="mx-quiet" data-do="mx" data-act="new-item">Cancelar edição</button>':'')+'</form>')+
- '<div class="mx-admin-items">'+items.map(i=>'<article><div><strong>'+mxEsc(i.name)+'</strong><small>'+mxEUR(i.price_cents)+' · '+(i.capacity===null?'Sem limite':i.reserved_qty+'/'+i.capacity+' reservadas')+' · '+(i.active?'Ativo':'Inativo')+'</small></div><button type="button" data-do="mx" data-act="edit-item" data-id="'+mxEsc(i.id)+'">Editar</button></article>').join('')+'</div></div></section>'+
+ '<div class="mx-admin-items">'+items.map(i=>'<article><div><strong>'+mxEsc(i.name)+'</strong><small>'+mxEUR(i.price_cents)+' · '+('Reservadas: '+Number(i.reserved_qty||0)+' · Disponíveis: '+(i.capacity===null?'sem limite':Math.max(0,Number(i.capacity)-Number(i.reserved_qty||0))))+' · '+(i.active?'Ativo':'Inativo')+'</small></div><button type="button" data-do="mx" data-act="edit-item" data-id="'+mxEsc(i.id)+'">Editar</button></article>').join('')+'</div></div></section>'+
  (wk?'<section class="mx-panel"><h2>Resumo · '+mxEsc(mxFormatDate(wk.pickup_date))+'</h2>'+
  '<div class="mx-stats"><div><small>Encomendas</small><b>'+orders.length+'</b></div><div><small>Unidades</small><b>'+orders.reduce((n,o)=>n+(o.items||[]).reduce((k,l)=>k+Number(l.quantity),0),0)+'</b></div><div><small>Previsto</small><b>'+mxEUR(total)+'</b></div><div><small>Recebido</small><b>'+mxEUR(paid)+'</b></div></div>'+
  '<p class="mx-footnote">Para consultar os nomes, os pagamentos e as retiradas, abra o Caixa. Não há painel de cozinha.</p></section>':'');
