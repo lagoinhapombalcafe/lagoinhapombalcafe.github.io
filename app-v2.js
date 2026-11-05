@@ -1,6 +1,6 @@
 import {CONFIG} from './config.js';
-import * as MX from './marmitex.js?v=4.6';
-import * as ST from './stock.js?v=5.0';
+import * as MX from './marmitex.js?v=5.1';
+import * as ST from './stock.js?v=5.1';
 const $=s=>document.querySelector(s), root=$('#app');
 const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',editProduct:null,editCombo:null,month:'',analytics:null,analyticsError:'',stockMonth:'',busy:false,notice:'',checkoutOpen:false,customerName:'',loginEmail:''};
 let api;
@@ -331,7 +331,7 @@ function analyticsPanel(){
    <div class="analytics-foot"><small>Os pedidos de teste não entram nos gráficos. Os valores representam pagamentos confirmados, antes de descontar despesas.</small><button class="small ghost" data-do="refresh-stats">Atualizar gráficos ↻</button></div>
  </section>`;
 }
-function admin(){let opts=[['visao','Resumo'],['estatisticas','Gráficos'],['produtos','Individuais'],['combos','Combos'],['marmitex','Marmitex'],['estoque','Estoque'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='estatisticas'?analyticsPanel():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():S.tab==='marmitex'?marmitexAdminPanel():S.tab==='estoque'?ST.render(S.products,S.stockMonth):qr()}`;}
+function admin(){let opts=[['visao','Resumo'],['estatisticas','Gráficos'],['produtos','Individuais'],['combos','Combos'],['marmitex','Marmitex'],['estoque','Estoque'],['financas','Financeiro'],['qr','QR Code']];return header('Administrador','Controle geral, cardápio, estoque e finanças.')+`<nav class="tabs">${opts.map(([id,label])=>`<button data-do="tab" data-tab="${id}" class="${S.tab===id?'active':''}">${label}</button>`).join('')}</nav>${S.tab==='visao'?overview():S.tab==='estatisticas'?analyticsPanel():S.tab==='produtos'?productsPanel():S.tab==='combos'?combosPanel():S.tab==='financas'?financePanel():S.tab==='marmitex'?marmitexAdminPanel():S.tab==='estoque'?ST.render(S.products,S.stockMonth,S.combos):qr()}`;}
 function marmitexAdminPanel(){
  return `<section class="admin-marmitex" aria-label="Cadastro e gestão de marmitex">
  <div class="admin-marmitex-intro"><div><strong>Cadastro de Marmitex</strong><p>Configure os domingos, cadastre pratos, preços e quantidades. As encomendas e o caixa das marmitex são independentes das vendas do café.</p></div><a href="./marmitex.html" target="_blank" rel="noopener noreferrer">Ver página de encomendas ↗</a></div>
