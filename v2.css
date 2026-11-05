@@ -1398,3 +1398,81 @@ footer{border-top:1px solid #6D513259;padding-top:16px;color:#B69C80!important}
 .stock-weekly-table td strong{color:#fce1ac}
 .stock-weekly-link{display:inline-flex;flex-shrink:0;padding:10px 14px;border:1px solid #d8a667;border-radius:9px;text-decoration:none!important;color:#f7d5a1!important;font-size:12px;font-weight:800;background:#49301c}
 @media(max-width:620px){.stock-reservation-summary{grid-template-columns:1fr;gap:9px}.stock-reservation-summary>div{padding:14px 16px}.stock-weekly-link{font-size:11px}}
+
+
+/* Lagoinha Café — Admin 5.2: navegação principal e subáreas de Produtos */
+.admin-main-nav{
+ display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;
+ padding:7px;margin:0 0 23px;border:1px solid #65513a;border-radius:17px;
+ background:linear-gradient(125deg,#2b241e,#1a1715);box-shadow:0 8px 25px #0002;
+}
+.admin-main-nav button{
+ min-width:0;padding:15px 10px;border:1px solid transparent;border-radius:11px;
+ background:transparent;color:#d9c6ae;font-size:14px;font-weight:850;
+ transition:background .16s,color .16s;
+}
+.admin-main-nav button.active{
+ color:#25170e;border-color:#efca90;
+ background:linear-gradient(120deg,#f2d59f,#d7a767);
+ box-shadow:0 4px 14px #0003;
+}
+.admin-main-nav button:hover:not(.active){background:#463627;color:#ffe4c1}
+.admin-main-nav button:focus-visible,.admin-product-subnav button:focus-visible,.admin-cafe-tools button:focus-visible{
+ outline:3px solid #eac484;outline-offset:2px
+}
+.admin-product-subnav{
+ display:flex;flex-wrap:wrap;gap:10px;
+ padding:7px;margin:0 0 22px;border:1px solid #655038;border-radius:14px;
+ background:#211b17;
+}
+.admin-product-subnav button{
+ flex:1 1 180px;padding:13px 18px;text-align:center;border:1px solid #715537;
+ border-radius:10px;background:#30251d;color:#edd5b5;font-size:15px;font-weight:850;
+}
+.admin-product-subnav button.active{border-color:#e7b576;background:#59402a;color:#ffebc9}
+.admin-product-subnav button:hover:not(.active){background:#423225}
+.admin-product-heading{
+ display:flex;align-items:center;justify-content:space-between;
+ padding:4px 0 15px;
+}
+.admin-product-heading h2{
+ margin:5px 0 5px;font-family:Georgia,"Times New Roman",serif;
+ color:#fff0d8;font-size:clamp(26px,3.3vw,35px);
+}
+.admin-product-heading p{margin:0;color:#c9af92;font-size:13px;line-height:1.5}
+.admin-cafe-tools{
+ display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+ padding-bottom:14px;margin:0 0 20px;border-bottom:1px solid #695039;
+}
+.admin-cafe-tools button{
+ border:1px solid #6c543d;border-radius:9px;background:#24201c;
+ color:#d5bda0;padding:10px 16px;font-size:13px;font-weight:800;
+}
+.admin-cafe-tools button.active{
+ background:#3e3021;border-color:#dbad6f;color:#ffe6bd;
+}
+.admin-cafe-tools button:hover:not(.active){background:#382c23}
+.admin-overview-shortcuts{display:flex;flex-wrap:wrap;gap:10px;margin:3px 0 22px}
+.admin-overview-shortcuts button{
+ border:1px solid #986f41;border-radius:10px;padding:11px 16px;
+ background:#34271b;color:#f6d4a6;font-size:13px;font-weight:800;
+}
+.admin-overview-shortcuts button:hover{background:#4c3621}
+@media(max-width:750px){
+ .admin-main-nav{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px}
+ .admin-main-nav button{padding:12px 6px;font-size:12px}
+ .admin-product-subnav{gap:6px}
+ .admin-product-subnav button{flex-basis:125px;font-size:13px;padding:12px}
+ .admin-cafe-tools{gap:6px}
+ .admin-cafe-tools button{font-size:12px;padding:10px 12px}
+}
+@media(max-width:460px){
+ .admin-main-nav{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .admin-main-nav button{font-size:13px}
+ .admin-main-nav button:nth-child(3){grid-column:span 2}
+ .admin-overview-shortcuts{display:grid;grid-template-columns:1fr}
+ .admin-overview-shortcuts button{width:100%;text-align:left}
+}
+@media print{
+ .admin-main-nav,.admin-product-subnav,.admin-cafe-tools,.admin-overview-shortcuts{display:none!important}
+}
