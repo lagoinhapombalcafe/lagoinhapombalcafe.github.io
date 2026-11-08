@@ -92,21 +92,26 @@ function mxStaffOrders(){
    const state=x=>x.status==='delivered'?2:x.payment_status==='paid'?1:0;
    return state(a)-state(b)||a.customer_name.localeCompare(b.customer_name,'pt');
  }).map(o=>{
-   const done=o.status==='delivered';
+   const done=o.status==='delivered',fromCafe=o.source==='cafe';
+   const mixed=fromCafe&&Number(o.cafe_total_cents||0)>Number(o.total_cents||0);
    const buttons=[];
    if(!done&&o.payment_status==='pending'){
-     buttons.push(['paid_delivered','✓ Receber e entregar']);
-     buttons.push(['paid','Só confirmar pagamento']);
-     if(o.status==='reserved')buttons.push(['cancel','Cancelar']);
+     buttons.push([fromCafe?'cafe-paid_delivered':'paid_delivered','✓ Receber e entregar']);
+     buttons.push([fromCafe?'cafe-paid':'paid','Só confirmar pagamento']);
+     if(o.status==='reserved')buttons.push([fromCafe?'cafe-cancel':'cancel',fromCafe?'Cancelar venda do Café':'Cancelar']);
    }
-   if(!done&&o.payment_status==='paid')buttons.push(['delivered','✓ Marcar como entregue']);
+   if(!done&&o.payment_status==='paid')buttons.push([fromCafe?'cafe-delivered':'delivered','✓ Marcar como entregue']);
    const status=done?'ENTREGUE':o.payment_status==='paid'?'PAGO · POR RETIRAR':'AGUARDA PAGAMENTO';
-   return '<article class="mx-order-card '+(done?'mx-delivered':'')+'"><div class="mx-order-top"><strong>'+mxEsc(o.customer_name)+'</strong><span>'+status+'</span></div>'+
+   const source=fromCafe?'<span class="mx-sale-origin mx-sale-origin-cafe">☕ Vendido no Café · Senha #'+mxEsc(String(o.cafe_number||''))+'</span>':
+     '<span class="mx-sale-origin">🍱 Encomenda pelo QR Code</span>';
+   return '<article class="mx-order-card '+(done?'mx-delivered ':'')+(fromCafe?'mx-cafe-sale':'')+'"><div class="mx-order-top"><strong>'+mxEsc(o.customer_name)+'</strong><span>'+status+'</span></div>'+
+     source+
      '<p class="mx-order-ref">#'+mxEsc(String(o.id).slice(-6).toUpperCase())+(o.customer_phone?' · '+mxEsc(o.customer_phone):'')+'</p>'+
      '<div class="mx-order-lines">'+(o.items||[]).map(l=>'<div><b>'+l.quantity+'×</b><span>'+mxEsc(l.name)+'</span></div>').join('')+'</div>'+
+     (mixed?'<p class="mx-sale-mixed">Este pedido contém outros artigos do Café. Pagamento conjunto: <b>'+mxEUR(o.cafe_total_cents)+'</b> · Marmitex: '+mxEUR(o.total_cents)+'</p>':'')+
      '<div class="mx-order-bottom"><strong>'+mxEUR(o.total_cents)+'</strong><div>'+buttons.map(([act,label])=>'<button type="button" data-do="mx" data-act="'+act+'" data-id="'+mxEsc(o.id)+'" '+(M.busy?'disabled':'')+'>'+label+'</button>').join('')+'</div></div></article>';
  }).join('');
- return '<section class="mx-hero"><div class="mx-kicker">MARMITEX · ATENDIMENTO</div><h1>Caixa e <em>retirada.</em></h1><p>Localize o nome, receba o pagamento e entregue a marmitex. Não existe etapa de cozinha neste sistema.</p></section>'+mxStaffNav()+mxMsg()+
+ return '<section class="mx-hero"><div class="mx-kicker">MARMITEX · ATENDIMENTO</div><h1>Caixa e <em>retirada.</em></h1><p>Encomendas pelo QR Code e vendas feitas no Café aparecem juntas. Confirmar o pagamento de uma venda do Café atualiza o pedido original, sem cobrança duplicada.</p></section>'+mxStaffNav()+mxMsg()+
  (wk?'<section class="mx-panel">'+picker+'<div class="mx-stats"><div><small>Encomendas</small><b>'+orders.length+'</b></div><div><small>Por pagar</small><b>'+pending.length+'</b></div><div><small>Entregues</small><b>'+delivered.length+'</b></div><div><small>Recebido</small><b>'+mxEUR(received)+'</b></div></div>'+
  '<h2>Reservas por prato</h2><p class="mx-footnote">Total encomendado inclui pratos já entregues; “Por retirar” indica o que ainda precisa de estar separado.</p><div class="mx-production">'+([...qty.entries()].map(([name,num])=>'<div><span>'+mxEsc(name)+'</span><b>'+num+' encomendadas · '+(awaitingQty.get(name)||0)+' por retirar · '+(deliveredQty.get(name)||0)+' entregues</b></div>').join('')||'<p>Sem encomendas para este domingo.</p>')+'</div>'+
  '<h2>Encomendas e retiradas</h2><div class="mx-order-grid">'+(list||'<p class="mx-empty">Nenhuma encomenda registada.</p>')+'</div></section>':
@@ -129,12 +134,12 @@ function mxAdmin(){
   const target=o.status==='delivered'?done:toDeliver;
   target.set(String(l.item_id),(target.get(String(l.item_id))||0)+Number(l.quantity||0));
  }
- const alreadyReserved=items.reduce((n,i)=>n+Number(i.reserved_qty||0),0);
+ const alreadyReserved=items.reduce((n,i)=>n+Number(i.total_ordered_qty??i.reserved_qty??0),0);
  const notDelivered=items.reduce((n,i)=>n+(toDeliver.get(String(i.id))||0),0);
- const reservationOverview=wk?'<section class="mx-panel mx-reservation-overview"><div class="mx-panel-head"><div><h2>Reservas da semana</h2><p class="mx-footnote">Quantidades confirmadas para '+mxEsc(mxFormatDate(wk.pickup_date))+'. As reservas de Marmitex e as vendas do Café descontam o mesmo estoque por produto.</p></div></div>'+
+ const reservationOverview=wk?'<section class="mx-panel mx-reservation-overview"><div class="mx-panel-head"><div><h2>Reservas da semana</h2><p class="mx-footnote">Quantidades confirmadas para '+mxEsc(mxFormatDate(wk.pickup_date))+'. As encomendas pelo QR Code e as vendas feitas no Café aparecem juntas e descontam o mesmo estoque por prato.</p></div></div>'+
  '<div class="mx-reservation-kpis"><div><span>Já encomendadas</span><strong>'+alreadyReserved+'</strong></div><div><span>Ainda por entregar</span><strong>'+notDelivered+'</strong></div><div><span>Já entregues</span><strong>'+(alreadyReserved-notDelivered)+'</strong></div></div>'+
  '<div class="mx-reservation-scroll"><table class="mx-reservation-table"><thead><tr><th>Prato</th><th>Reservadas</th><th>Por retirar</th><th>Entregues</th><th>Ainda disponíveis</th></tr></thead><tbody>'+
- items.map(i=>{const n=Number(i.reserved_qty||0),pending=toDeliver.get(String(i.id))||0,delivered=done.get(String(i.id))||0,remaining=Number(i.available||0)+' un.';return '<tr><td><strong>'+mxEsc(i.name)+'</strong></td><td><b class="mx-reserved-count">'+n+'</b></td><td><b>'+pending+'</b></td><td>'+delivered+'</td><td>'+remaining+'</td></tr>';}).join('')+
+ items.map(i=>{const n=Number(i.total_ordered_qty??i.reserved_qty??0),pending=toDeliver.get(String(i.id))||0,delivered=done.get(String(i.id))||0,remaining=Number(i.available||0)+' un.';return '<tr><td><strong>'+mxEsc(i.name)+'</strong></td><td><b class="mx-reserved-count">'+n+'</b></td><td><b>'+pending+'</b></td><td>'+delivered+'</td><td>'+remaining+'</td></tr>';}).join('')+
  '</tbody></table></div><p class="mx-footnote">As reservas são contabilizadas ao fazer a encomenda e devolvidas ao cancelar. Entregar não liberta a vaga da semana.</p></section>':'';
  return '<section class="mx-hero"><div class="mx-kicker">ADMINISTRADOR · ENCOMENDAS SEMANAIS</div><h1>Gestão de <em>Marmitex.</em></h1><p>Defina o domingo, o prazo para encomendar e os pratos. Só abra quando os preços e as quantidades estiverem corretos.</p></section>'+mxStaffNav()+mxMsg()+
  '<div class="mx-qr-admin"><a href="./marmitex-qr.html" target="_blank" rel="noopener">◼ Ver e imprimir QR Code exclusivo das marmitex ↗</a></div>'+ 
@@ -156,7 +161,7 @@ function mxAdmin(){
  '<label class="mx-check"><input name="active" type="checkbox" '+(!editing||editing.active?'checked':'')+'> Prato ativo</label>'+
  '<button type="submit" class="mx-primary" '+(M.busy?'disabled':'')+'>'+(editing?'Guardar alterações':'Adicionar prato')+'</button>'+
  (editing?'<button type="button" class="mx-quiet" data-do="mx" data-act="new-item">Cancelar edição</button>':'')+'</form>')+
- '<div class="mx-admin-items">'+items.map(i=>'<article><div><strong>'+mxEsc(i.name)+'</strong><small>'+mxEUR(i.price_cents)+' · '+('Reservadas: '+Number(i.reserved_qty||0)+' · Disponíveis em ambos os canais: '+Number(i.available||0)+' · Estoque livre: '+(i.stock_qty===null?'Não vinculado':i.stock_qty+' un.'))+' · '+(i.active?'Ativo':'Inativo')+'</small></div><button type="button" data-do="mx" data-act="edit-item" data-id="'+mxEsc(i.id)+'">Editar</button></article>').join('')+'</div></div></section>'+
+ '<div class="mx-admin-items">'+items.map(i=>'<article><div><strong>'+mxEsc(i.name)+'</strong><small>'+mxEUR(i.price_cents)+' · '+('QR Code: '+Number(i.reserved_qty||0)+' · Vendidas no Café: '+Number(i.cafe_qty||0)+' · Total encomendado: '+Number(i.total_ordered_qty??i.reserved_qty??0)+' · Disponíveis: '+Number(i.available||0))+' · '+(i.active?'Ativo':'Inativo')+'</small></div><button type="button" data-do="mx" data-act="edit-item" data-id="'+mxEsc(i.id)+'">Editar</button></article>').join('')+'</div></div></section>'+
  (wk?'<section class="mx-panel"><h2>Resumo · '+mxEsc(mxFormatDate(wk.pickup_date))+'</h2>'+
  '<div class="mx-stats"><div><small>Encomendas</small><b>'+orders.length+'</b></div><div><small>Unidades</small><b>'+orders.reduce((n,o)=>n+(o.items||[]).reduce((k,l)=>k+Number(l.quantity),0),0)+'</b></div><div><small>Previsto</small><b>'+mxEUR(total)+'</b></div><div><small>Recebido</small><b>'+mxEUR(paid)+'</b></div></div>'+
  '<p class="mx-footnote">Para consultar os nomes, os pagamentos e as retiradas, abra o Caixa. Não há painel de cozinha.</p></section>':'');
@@ -208,14 +213,16 @@ async function mxAction(api,b,view,role){
  if(act==='edit-item'){M.editId=id;M.notice='';return;}
  if(act==='new-item'){M.editId=null;M.notice='';return;}
  if(act==='refresh'){await mxLoad(api,view);return;}
- if(['paid','paid_delivered','delivered','cancel'].includes(act)){
-  if(act==='paid'&&!confirm('Confirmar que recebeu o pagamento desta encomenda?'))return;
-  if(act==='paid_delivered'&&!confirm('Confirmar pagamento recebido e marmitex entregue ao cliente?'))return;
-  if(act==='delivered'&&!confirm('Confirmar que entregou a marmitex ao cliente?'))return;
-  if(act==='cancel'&&!confirm('Cancelar esta encomenda não paga e devolver as quantidades ao cardápio?'))return;
+ const fromCafe=act.startsWith('cafe-');
+ const action=fromCafe?act.slice(5):act;
+ if(['paid','paid_delivered','delivered','cancel'].includes(action)){
+  if(action==='paid'&&!confirm(fromCafe?'Confirmar pagamento do pedido completo do Café?':'Confirmar que recebeu o pagamento desta encomenda?'))return;
+  if(action==='paid_delivered'&&!confirm(fromCafe?'Confirmar o pagamento do pedido inteiro do Café e a entrega das Marmitex?':'Confirmar pagamento recebido e marmitex entregue ao cliente?'))return;
+  if(action==='delivered'&&!confirm('Confirmar que entregou a marmitex ao cliente?'))return;
+  if(action==='cancel'&&!confirm(fromCafe?'Cancelar todo o pedido não pago do Café? Outros produtos do mesmo pedido também serão cancelados.':'Cancelar esta encomenda não paga e devolver as quantidades ao cardápio?'))return;
   M.busy=true;
   try{
-   await mxRPC(api,'mx_staff_action',{p_order_id:id,p_action:act});
+   await mxRPC(api,fromCafe?'mx_cafe_sale_action_v1':'mx_staff_action',{p_order_id:id,p_action:action});
    M.notice='Estado da encomenda atualizado.';
    await mxLoad(api,view);
   }finally{M.busy=false;}
