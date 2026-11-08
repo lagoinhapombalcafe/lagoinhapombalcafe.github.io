@@ -28,17 +28,27 @@ export async function load(api,month){
  state.loaded=true;
 }
 function reservedMap(list){return new Map((list||[]).map(x=>[String(x.id),Number(x.reserved_qty)||0]));}
+function pendingMarmitexByProduct(){
+ const byItem=new Map((state.marmitex.items||[]).map(i=>[String(i.id),i.product_id]));
+ const pending=new Map();
+ for(const o of state.marmitex.orders||[]){
+  if(['cancelled','delivered'].includes(o.status))continue;
+  for(const l of o.items||[]){const id=byItem.get(String(l.item_id));
+   if(id)pending.set(String(id),(pending.get(String(id))||0)+Number(l.quantity||0));}
+ }
+ return pending;
+}
 function itemRows(products){
- const reserved=reservedMap(state.reservations.products);
+ const cafe=reservedMap(state.reservations.products),mx=pendingMarmitexByProduct();
  return products.slice().sort((a,b)=>a.name.localeCompare(b.name,'pt')).map(p=>{
-  const saldo=p.stock_qty, saved=reserved.get(String(p.id))||0;
-  const qty=saldo===null?'Sem controlo':Number(saldo).toLocaleString('pt-PT')+' un.';
+  const saldo=p.stock_qty,bookedCafe=cafe.get(String(p.id))||0,bookedMx=mx.get(String(p.id))||0;
   const cls=saldo===null?'none':saldo<=5?'low':'ok';
-  const physical=saldo===null?'—':(Number(saldo)+saved).toLocaleString('pt-PT')+' un.';
+  const estimated=saldo===null?'—':(Number(saldo)+bookedCafe+bookedMx)+' un.';
   return '<tr><td><b>'+esc(p.name)+'</b><small>'+(p.active?'Ativo':'Oculto')+'</small></td>'+
-   '<td><span class="stock-status stock-'+cls+'">'+qty+'</span></td>'+
-   '<td><span class="stock-reserved '+(saved?'has-reservations':'')+'">'+saved+' un.</span></td>'+
-   '<td>'+physical+'</td></tr>';
+  '<td><span class="stock-status stock-'+cls+'">'+(saldo===null?'Sem controlo':saldo+' un.')+'</span></td>'+
+  '<td><span class="stock-reserved '+(bookedCafe?'has-reservations':'')+'">'+bookedCafe+' un.</span></td>'+
+  '<td><span class="stock-reserved '+(bookedMx?'has-reservations':'')+'">'+bookedMx+' un.</span></td>'+
+  '<td>'+estimated+'</td></tr>';
  }).join('');
 }
 function comboReservations(combos){
@@ -66,11 +76,11 @@ function weeklyMarmitex(){
    const booked=Number(item.reserved_qty)||0;
    const toGive=pendingByItem.get(String(item.id))||0;
    const done=deliveredByItem.get(String(item.id))||0;
-   const remaining=item.capacity===null?'Sem limite':Math.max(0,Number(item.capacity)-booked)+' un.';
+   const remaining=Number(item.available||0)+' un.';
    rows.push('<tr><td><b>'+esc(week.pickup_date)+'</b><small>Domingo de retirada</small></td><td><b>'+esc(item.name)+'</b></td><td><span class="stock-reserved '+(booked?'has-reservations':'')+'">'+booked+' un.</span></td><td><strong>'+toGive+' un.</strong></td><td>'+done+' un.</td><td>'+remaining+'</td></tr>');
   }
  }
- return '<section class="stock-panel stock-weekly"><div class="stock-panel-top"><div><h3>Reservas de Marmitex · Próximos domingos</h3><p class="stock-muted">Encomendas independentes do estoque do café. Os limites são definidos no cardápio semanal.</p></div><a class="stock-weekly-link" href="./marmitex.html#/marmitex-caixa">Ver encomendas</a></div>'+
+ return '<section class="stock-panel stock-weekly"><div class="stock-panel-top"><div><h3>Reservas de Marmitex · Próximos domingos</h3><p class="stock-muted">Marmitex e Café partilham o mesmo estoque por produto. As reservas já estão descontadas do disponível.</p></div><a class="stock-weekly-link" href="./marmitex.html#/marmitex-caixa">Ver encomendas</a></div>'+
  '<div class="stock-scroll"><table class="stock-table stock-weekly-table"><thead><tr><th>Retirada</th><th>Prato</th><th>Total reservado</th><th>Por entregar</th><th>Entregue</th><th>Vagas disponíveis</th></tr></thead><tbody>'+
  (rows.join('')||'<tr><td colspan="6">Não há semanas com pratos cadastrados para as próximas retiradas.</td></tr>')+
  '</tbody></table></div><p class="stock-muted">Total reservado inclui encomendas não canceladas, mesmo após a entrega. “Por entregar” mostra apenas as encomendas ainda não levantadas.</p></section>';
@@ -98,9 +108,10 @@ export function render(products,month,combos){
  const entries=state.movements.filter(m=>m.kind==='entrada').length;
  const exits=state.movements.filter(m=>m.kind==='saida'||(m.kind==='automatico'&&m.delta_qty<0)).length;
  const reservedProducts=reservedMap(state.reservations.products);
- const options=products.slice().sort((a,b)=>a.name.localeCompare(b.name,'pt')).map(p=>'<option value="'+esc(p.id)+'" data-current="'+esc(p.stock_qty??'')+'" data-reserved="'+(reservedProducts.get(String(p.id))||0)+'">'+esc(p.name)+'</option>').join('');
+ const reservedMx=pendingMarmitexByProduct();
+ const options=products.slice().sort((a,b)=>a.name.localeCompare(b.name,'pt')).map(p=>'<option value="'+esc(p.id)+'" data-current="'+esc(p.stock_qty??'')+'" data-reserved="'+(reservedProducts.get(String(p.id))||0)+'" data-mx-reserved="'+(reservedMx.get(String(p.id))||0)+'">'+esc(p.name)+'</option>').join('');
  return '<section class="stock-dashboard" aria-label="Controlo do estoque">'+
- '<div class="stock-hero"><div><span class="section-eyebrow">ADMINISTRADOR · INVENTÁRIO</span><h2>Controle de estoque</h2><p>Registe compras, retiradas e conferências. As vendas do café atualizam o saldo dos produtos automaticamente.</p></div>'+
+ '<div class="stock-hero"><div><span class="section-eyebrow">ADMINISTRADOR · INVENTÁRIO</span><h2>Controle de estoque</h2><p>Registe compras, retiradas e conferências. As vendas do Café e as reservas de Marmitex atualizam o mesmo saldo.</p></div>'+
  '<label>Mês de referência<input id="stock-month" type="month" value="'+esc(selected)+'"></label></div>'+
  '<div class="stock-stats">'+
  '<div><span>Compras de estoque</span><strong>'+money(stockSpend)+'</strong><small>Entradas lançadas com custo</small></div>'+
@@ -109,9 +120,9 @@ export function render(products,month,combos){
  '<div><span>Produtos com saldo baixo</span><strong>'+low+'</strong><small>Saldo entre 0 e 5 unidades</small></div>'+
  '</div>'+
  '<p class="stock-note">As compras com valor registadas aqui entram automaticamente no Financeiro. Não lance a mesma compra duas vezes. Os valores referem-se ao mês selecionado.</p>'+ 
- '<div class="stock-reservation-summary"><div><span>☕ Reservado nos pedidos abertos do Café</span><strong>'+cafeReserved+' unidades</strong><small>'+Number(state.reservations.open_orders||0)+' pedidos ainda não entregues</small></div><div><span>🍱 Marmitex já encomendadas (próximos domingos)</span><strong>'+marmitexUpcoming+' unidades</strong><small>Controladas no cardápio semanal, separadamente do Café</small></div></div>'+
+ '<div class="stock-reservation-summary"><div><span>☕ Reservado nos pedidos abertos do Café</span><strong>'+cafeReserved+' unidades</strong><small>'+Number(state.reservations.open_orders||0)+' pedidos ainda não entregues</small></div><div><span>🍱 Marmitex já encomendadas (próximos domingos)</span><strong>'+marmitexUpcoming+' unidades</strong><small>Já descontadas do saldo livre do estoque do Café</small></div></div>'+
  '<div class="stock-columns"><section class="stock-panel"><h3>Lançar movimento</h3>'+
- '<p class="stock-muted">A entrada aumenta o saldo. A saída diminui. A conferência define a quantidade que contou fisicamente.</p>'+
+ '<p class="stock-muted">A entrada aumenta o saldo. A saída diminui. Na conferência de Marmitex informe apenas o saldo livre, sem as reservas já feitas.</p>'+
  '<form id="stock-movement-form" class="stock-form">'+
  '<label>Produto<select name="product_id" id="stock-product" required>'+options+'</select></label>'+
  '<label>Operação<select name="kind" id="stock-kind"><option value="entrada">Entrada / compra</option><option value="saida">Saída / consumo / perda</option><option value="conferencia">Conferência / acerto</option></select></label>'+
@@ -123,9 +134,9 @@ export function render(products,month,combos){
  '<button class="stock-submit" type="submit">Guardar movimento</button>'+
  '</form></section>'+
  '<section class="stock-panel"><div class="stock-panel-top"><div><h3>Saldos atuais</h3><p class="stock-muted">'+tracked.length+' produtos controlados</p></div><button class="small ghost" data-do="stock-refresh">Atualizar ↻</button></div>'+
- '<div class="stock-scroll"><table class="stock-table stock-reservation-table"><thead><tr><th>Produto</th><th>Disponível</th><th>Reservado</th><th>Total estimado antes das entregas</th></tr></thead><tbody>'+
- (itemRows(products)||'<tr><td colspan="4">Sem produtos cadastrados.</td></tr>')+
- '</tbody></table></div><p class="stock-muted">“Reservado” é a quantidade em pedidos do café ainda não entregues. O sistema já descontou essas unidades do disponível na criação do pedido: não desconte novamente. O total estimado soma disponível e reservado para auxiliar a conferência física. “Sem controlo” significa estoque ilimitado.</p></section></div>'+ 
+ '<div class="stock-scroll"><table class="stock-table stock-reservation-table"><thead><tr><th>Produto</th><th>Disponível</th><th>Reservado Café</th><th>Reservado Marmitex</th><th>Saldo físico estimado</th></tr></thead><tbody>'+
+ (itemRows(products)||'<tr><td colspan="5">Sem produtos cadastrados.</td></tr>')+
+ '</tbody></table></div><p class="stock-muted">O disponível já exclui reservas de Café e Marmitex. O saldo físico estimado soma unidades ainda por entregar. Na conferência registe somente a quantidade livre para novas vendas.</p></section></div>'+ 
  comboReservations(combos)+weeklyMarmitex()+
  '<section class="stock-panel"><div class="stock-panel-top"><div><h3>Histórico de entradas e saídas</h3>'+
  '<p class="stock-muted">'+state.movements.length+' movimentos no mês · '+entries+' entradas · '+exits+' saídas</p></div>'+
@@ -144,11 +155,11 @@ export function updateForm(root){
  const label=root.querySelector('#stock-qty-label');
  if(cost){cost.hidden=!entry;cost.querySelector('input').disabled=!entry;}
  if(quantity){quantity.min=count?'0':'1';}
- if(label)label.childNodes[0].textContent=count?'Quantidade contada':'Quantidade';
+ if(label)label.childNodes[0].textContent=count?'Saldo livre para venda (sem as reservas)':'Quantidade';
  const option=product.selectedOptions[0];
  const current=option?.dataset.current;
  const note=root.querySelector('#stock-current');
- if(note){const reserved=Number(option?.dataset.reserved||0);note.textContent=current===''?'Sem controlo de saldo · '+reserved+' reservadas em pedidos do café':'Disponível: '+current+' unidades · Reservado em pedidos: '+reserved+' unidades (já descontadas do disponível)';}
+ if(note){const reserved=Number(option?.dataset.reserved||0);note.textContent=current===''?'Sem controlo de saldo':'Disponível: '+current+' un. · Reservado Café: '+reserved+' un. · Reservado Marmitex: '+Number(option?.dataset.mxReserved||0)+' un. (já descontadas)';}
 }
 export async function submit(api,form){
  const data=new FormData(form);
