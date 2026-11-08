@@ -79,7 +79,10 @@ function mxStaffOrders(){
  const pending=orders.filter(o=>o.payment_status==='pending'&&o.status!=='delivered');
  const paid=orders.filter(o=>o.payment_status==='paid'&&o.status!=='delivered');
  const delivered=orders.filter(o=>o.status==='delivered');
- const received=orders.filter(o=>o.payment_status==='paid').reduce((n,o)=>n+o.total_cents,0);
+ const paidOrders=orders.filter(o=>o.payment_status==='paid');
+ const received=paidOrders.reduce((n,o)=>n+Number(o.total_cents||0),0);
+ const paidUnits=paidOrders.reduce((n,o)=>n+(o.items||[]).reduce((v,l)=>v+Number(l.quantity||0),0),0);
+ const pendingValue=pending.reduce((n,o)=>n+Number(o.total_cents||0),0);
  const qty=new Map(),awaitingQty=new Map(),deliveredQty=new Map();
  for(const o of orders)for(const l of o.items||[]){
   qty.set(l.name,(qty.get(l.name)||0)+Number(l.quantity));
@@ -112,7 +115,7 @@ function mxStaffOrders(){
      '<div class="mx-order-bottom"><strong>'+mxEUR(o.total_cents)+'</strong><div>'+buttons.map(([act,label])=>'<button type="button" data-do="mx" data-act="'+act+'" data-id="'+mxEsc(o.id)+'" '+(M.busy?'disabled':'')+'>'+label+'</button>').join('')+'</div></div></article>';
  }).join('');
  return '<section class="mx-hero"><div class="mx-kicker">MARMITEX · ATENDIMENTO</div><h1>Caixa e <em>retirada.</em></h1><p>Encomendas pelo QR Code e vendas feitas no Café aparecem juntas. Confirmar o pagamento de uma venda do Café atualiza o pedido original, sem cobrança duplicada.</p></section>'+mxStaffNav()+mxMsg()+
- (wk?'<section class="mx-panel">'+picker+'<div class="mx-stats"><div><small>Encomendas</small><b>'+orders.length+'</b></div><div><small>Por pagar</small><b>'+pending.length+'</b></div><div><small>Entregues</small><b>'+delivered.length+'</b></div><div><small>Recebido</small><b>'+mxEUR(received)+'</b></div></div>'+
+ (wk?'<section class="mx-panel">'+picker+'<div class="mx-stats"><div><small>Encomendas</small><b>'+orders.length+'</b></div><div><small>Por pagar</small><b>'+pending.length+'</b><small>'+mxEUR(pendingValue)+' pendentes</small></div><div><small>Pedidos pagos</small><b>'+paidOrders.length+'</b></div><div><small>Marmitex pagas</small><b>'+paidUnits+'</b></div><div><small>Entregues</small><b>'+delivered.length+'</b></div><div><small>Total recebido</small><b>'+mxEUR(received)+'</b></div></div>'+
  '<h2>Reservas por prato</h2><p class="mx-footnote">Total encomendado inclui pratos já entregues; “Por retirar” indica o que ainda precisa de estar separado.</p><div class="mx-production">'+([...qty.entries()].map(([name,num])=>'<div><span>'+mxEsc(name)+'</span><b>'+num+' encomendadas · '+(awaitingQty.get(name)||0)+' por retirar · '+(deliveredQty.get(name)||0)+' entregues</b></div>').join('')||'<p>Sem encomendas para este domingo.</p>')+'</div>'+
  '<h2>Encomendas e retiradas</h2><div class="mx-order-grid">'+(list||'<p class="mx-empty">Nenhuma encomenda registada.</p>')+'</div></section>':
  '<section class="mx-panel mx-centered"><h2>Aguardando cardápio semanal</h2><p>O Administrador pode configurar as semanas no painel de gestão.</p></section>');
@@ -222,9 +225,29 @@ async function mxAction(api,b,view,role){
   if(action==='cancel'&&!confirm(fromCafe?'Cancelar todo o pedido não pago do Café? Outros produtos do mesmo pedido também serão cancelados.':'Cancelar esta encomenda não paga e devolver as quantidades ao cardápio?'))return;
   M.busy=true;
   try{
-   await mxRPC(api,fromCafe?'mx_cafe_sale_action_v1':'mx_staff_action',{p_order_id:id,p_action:action});
-   M.notice='Estado da encomenda atualizado.';
-   await mxLoad(api,view);
+   if(action==='paid'||action==='paid_delivered'){
+     const confirmation=await mxRPC(api,'mx_payment_action_v2',{p_order_id:id,p_action:action});
+     if(confirmation?.payment_status!=='paid'||confirmation?.id!==id){
+       throw Error('Não foi possível validar o pagamento. Atualize o Caixa e confira o pedido antes de tentar novamente.');
+     }
+     // O RPC devolve o pagamento já gravado; atualizar o estado exibido imediatamente.
+     const locallyRecorded=M.dashboard?.orders?.find(o=>o.id===id);
+     if(locallyRecorded){
+       locallyRecorded.payment_status='paid';
+       if(action==='paid_delivered')locallyRecorded.status='delivered';
+     }
+     await mxLoad(api,view);
+     const refreshed=M.dashboard?.orders?.find(o=>o.id===id);
+     if(!refreshed||refreshed.payment_status!=='paid'){
+       throw Error('Pagamento confirmado na base de dados, mas não foi possível atualizar o painel. Recarregue a página antes de repetir.');
+     }
+     M.notice=(action==='paid_delivered'?'✓ Pagamento confirmado e Marmitex entregue.':'✓ Pagamento confirmado. A Marmitex continua por retirar.')+
+       ' Valor registado: '+mxEUR(confirmation.marmitex_total_cents)+'.';
+   }else{
+     await mxRPC(api,fromCafe?'mx_cafe_sale_action_v1':'mx_staff_action',{p_order_id:id,p_action:action});
+     await mxLoad(api,view);
+     M.notice=action==='delivered'?'✓ Retirada confirmada.':'✓ Encomenda cancelada.';
+   }
   }finally{M.busy=false;}
  }
 }
