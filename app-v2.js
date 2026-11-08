@@ -1,7 +1,7 @@
 import {CONFIG} from './config.js';
-import * as MX from './marmitex.js?v=5.3';
+import * as MX from './marmitex.js?v=5.5';
 import * as ST from './stock.js?v=5.3';
-import * as CO from './closeout.js?v=5.4';
+import * as CO from './closeout.js?v=5.5';
 const $=s=>document.querySelector(s), root=$('#app');
 const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',productArea:'cafe',cafeView:'itens',editProduct:null,editCombo:null,month:'',analytics:null,analyticsError:'',stockMonth:'',busy:false,notice:'',checkoutOpen:false,customerName:'',loginEmail:''};
 let api;
