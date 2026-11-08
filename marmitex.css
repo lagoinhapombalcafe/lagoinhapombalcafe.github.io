@@ -178,3 +178,13 @@
 .mx-reservation-table strong{color:#fff1d6}
 .mx-reserved-count{display:inline-block;min-width:30px;text-align:center;padding:5px 9px;border-radius:8px;background:#745027;color:#ffdf9f!important}
 @media(max-width:520px){.mx-reservation-kpis{gap:6px}.mx-reservation-kpis>div{padding:10px 8px}.mx-reservation-kpis span{font-size:10px}.mx-reservation-kpis strong{font-size:23px}.mx-reservation-table{font-size:12px}}
+
+
+/* v5.5 — distinguir vendas do Café do canal de encomendas Marmitex */
+.mx-sale-origin{display:inline-block;margin:5px 0 8px;padding:5px 10px;
+  background:#34302b;color:#d1c4b1;border:1px solid #665744;border-radius:9px;
+  font-size:12px;font-weight:800;line-height:1.4}
+.mx-sale-origin-cafe{background:#523719;color:#ffe0ad;border-color:#bb8649}
+.mx-cafe-sale{border-left:4px solid #d7a65f!important}
+.mx-sale-mixed{margin:7px 0 13px;padding:9px 12px;border-radius:8px;
+  color:#f1d5ab;background:#3a2e21;border:1px solid #755c39;font-size:12px;line-height:1.55}
