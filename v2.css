@@ -1476,3 +1476,65 @@ footer{border-top:1px solid #6D513259;padding-top:16px;color:#B69C80!important}
 @media print{
  .admin-main-nav,.admin-product-subnav,.admin-cafe-tools,.admin-overview-shortcuts{display:none!important}
 }
+
+
+/* Lagoinha Café 5.4 — Fechamento geral de caixa e compartilhamento WhatsApp */
+.closeout-panel{
+ margin:0 0 22px;padding:24px;border:1px solid #79613f;border-radius:19px;
+ background:linear-gradient(145deg,#29221c,#161515 75%);color:#f9ecd9;
+ box-shadow:0 14px 35px #0004;
+}
+.closeout-head{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:18px}
+.closeout-head h3{font-family:Georgia,'Times New Roman',serif;color:#fff1d5;font-size:clamp(23px,3vw,31px);margin:4px 0 5px}
+.closeout-head p{color:#cbb79f;font-size:13px;line-height:1.6;max-width:630px;margin:0}
+.closeout-head label{display:grid;gap:5px;color:#e7cfad;font-size:12px;font-weight:800;min-width:170px}
+.closeout-head input{width:100%;border:1px solid #806444;border-radius:9px;padding:11px 12px;color:#f8ead7;background:#3a2d20;color-scheme:dark}
+.closeout-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+.closeout-actions button{border:1px solid #a17a4c;padding:11px 16px;font-size:13px;font-weight:850;background:#473321;color:#ffe0aa}
+.closeout-actions button.ghost{background:#272322;color:#d9c5a9}
+.closeout-actions .closeout-whatsapp{background:#174d32;border-color:#51a678;color:#e8ffed}
+.closeout-actions button:focus-visible,.closeout-head input:focus-visible{outline:3px solid #dbb57b;outline-offset:2px}
+.closeout-meta{margin:17px 0 0;border-top:1px solid #63513a;padding-top:15px;color:#d8c2a8;font-size:13px}
+.closeout-meta strong{color:#fff0d8}
+.closeout-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:18px 0}
+.closeout-totals>div{padding:17px 16px;border:1px solid #725638;border-radius:13px;background:#34291e;display:grid;gap:5px}
+.closeout-totals span{font-size:12px;color:#e1c6a3;font-weight:700}
+.closeout-totals strong{font-size:clamp(20px,2.5vw,28px);color:#ffe0a9}
+.closeout-group{border:1px solid #63513a;background:#201d19;border-radius:14px;margin:12px 0;overflow:hidden}
+.closeout-group-head{padding:16px 18px;display:flex;gap:14px;justify-content:space-between;align-items:center;border-bottom:1px solid #4b3f31}
+.closeout-group-head h4{color:#fbe8c6;font-size:18px;margin:0 0 2px}
+.closeout-group-head p{font-size:12px;color:#c5af92;margin:0}
+.closeout-group-head>strong{color:#f9d08c;font-size:21px;white-space:nowrap}
+.closeout-counts{display:flex;gap:8px;flex-wrap:wrap;padding:12px 18px 2px}
+.closeout-counts span{background:#3d3328;border:1px solid #6b5541;color:#eed6b7;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:750}
+.closeout-lines{padding:5px 18px 13px}
+.closeout-line{display:flex;align-items:baseline;justify-content:space-between;gap:13px;padding:9px 0;border-bottom:1px solid #443a30;font-size:13px;line-height:1.55}
+.closeout-line:last-child{border-bottom:0}
+.closeout-line span{min-width:0;overflow-wrap:anywhere;color:#e2d2be}
+.closeout-line strong{white-space:nowrap;color:#ffe0a5;font-size:13px}
+.closeout-line small{color:#bda98d}
+.closeout-empty{color:#bea98e;font-size:13px;padding:8px 18px 17px;margin:0}
+.closeout-result{padding:18px 20px;margin:16px 0 12px;border-radius:14px;border:1px solid #c69e64;background:#45301d;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.closeout-result span{font-size:13px;font-weight:900;letter-spacing:.03em;color:#f7e4c5}
+.closeout-result strong{color:#ffe2a5;font-size:clamp(24px,3vw,32px)}
+.closeout-pending,.closeout-no-pending{font-size:13px;line-height:1.55;border-radius:10px;padding:12px 15px;margin:11px 0}
+.closeout-pending{background:#443021;color:#ffddb1;border:1px solid #b5874d}
+.closeout-no-pending{background:#203628;color:#c9eccf;border:1px solid #52835d}
+.closeout-note{font-size:12px;color:#c6b5a0;line-height:1.6;margin:12px 0}
+.closeout-preview{border:1px solid #584733;border-radius:11px;margin-top:17px;background:#161414}
+.closeout-preview summary{padding:12px 15px;color:#f3d2a1;font-size:13px;font-weight:800;cursor:pointer}
+.closeout-preview pre{padding:13px 16px;border-top:1px solid #493b2c;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.65;color:#f4e4ca;margin:0;font-family:inherit}
+@media(max-width:650px){
+ .closeout-panel{padding:16px}
+ .closeout-head label{width:100%}
+ .closeout-actions button{flex:1 1 135px}
+ .closeout-totals{grid-template-columns:1fr}
+ .closeout-group-head{padding:14px}
+ .closeout-group-head>strong{font-size:18px}
+ .closeout-lines{padding:5px 14px 13px}
+ .closeout-result{align-items:flex-start}
+}
+@media print{
+ .closeout-actions,.closeout-head label,.closeout-preview{display:none!important}
+ .closeout-panel{color:#111;background:#fff;box-shadow:none;border:1px solid #aaa}
+}
