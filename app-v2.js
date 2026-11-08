@@ -1,5 +1,5 @@
 import {CONFIG} from './config.js';
-import * as MX from './marmitex.js?v=5.5';
+import * as MX from './marmitex.js?v=5.6';
 import * as ST from './stock.js?v=5.3';
 import * as CO from './closeout.js?v=5.5';
 const $=s=>document.querySelector(s), root=$('#app');
