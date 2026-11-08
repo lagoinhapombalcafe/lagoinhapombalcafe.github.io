@@ -1,6 +1,7 @@
 import {CONFIG} from './config.js';
 import * as MX from './marmitex.js?v=5.3';
 import * as ST from './stock.js?v=5.3';
+import * as CO from './closeout.js?v=5.4';
 const $=s=>document.querySelector(s), root=$('#app');
 const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',productArea:'cafe',cafeView:'itens',editProduct:null,editCombo:null,month:'',analytics:null,analyticsError:'',stockMonth:'',busy:false,notice:'',checkoutOpen:false,customerName:'',loginEmail:''};
 let api;
@@ -374,10 +375,10 @@ function overview(){
  const ex=S.expenses.filter(x=>x.expense_date===DAY());
  const a=paid.reduce((s,o)=>s+o.total_cents,0);
  const b=ex.reduce((s,e)=>s+e.amount_cents,0);
- return `<div class="panel"><div class="panel-head"><h2>Receber encomendas pelo QR Code</h2><span class="status">${S.settings.orders_open?'ABERTO':'FECHADO'}</span></div><button data-do="toggle">${S.settings.orders_open?'Fechar atendimento':'Abrir atendimento'}</button><p class="muted">Pagamentos apenas no balcão. Abra somente quando a equipa estiver preparada.</p></div>
+ return `<div class="panel"><div class="panel-head"><h2>Receber encomendas pelo QR Code</h2><span class="status">${S.settings.orders_open?'ABERTO':'FECHADO'}</span></div><button data-do="toggle">${S.settings.orders_open?'Fechar atendimento e gerar relatório':'Abrir atendimento'}</button><p class="muted">Pagamentos apenas no balcão. Abra somente quando a equipa estiver preparada.</p></div>
  <section class="admin-marmitex-quick"><div><strong>🍱 Cadastro de Marmitex</strong><p>Defina a semana de retirada, os pratos, preços e limites de encomendas.</p></div><button type="button" data-do="product-area" data-area="marmitex">Gerir marmitex</button></section>
  <div class="metrics"><div>Recebido hoje<b>${EUR(a)}</b></div><div>Despesas hoje<b>${EUR(b)}</b></div><div>Saldo hoje<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paid.length}</b></div></div>
- <section class="admin-overview-shortcuts" aria-label="Acesso rápido"><button type="button" data-do="tab" data-tab="estatisticas">Ver gráficos e desempenho</button><button type="button" data-do="tab" data-tab="estoque">Conferir estoque e reservas</button><button type="button" data-do="product-area" data-area="cafe" data-view="qr">Ver QR Code do Café</button></section>`;
+ <section class="admin-overview-shortcuts" aria-label="Acesso rápido"><button type="button" data-do="tab" data-tab="estatisticas">Ver gráficos e desempenho</button><button type="button" data-do="tab" data-tab="estoque">Conferir estoque e reservas</button><button type="button" data-do="open-closeout">Relatório geral para WhatsApp</button><button type="button" data-do="product-area" data-area="cafe" data-view="qr">Ver QR Code do Café</button></section>`;
 }
 function productIconMarkup(value){
  const code=String(value||'🍽️');
@@ -459,7 +460,7 @@ function productsPanel(){
  </section></div>`;
 }
 function combosPanel(){let c=combo(S.editCombo);return `<div class="catalog-admin-intro"><div><span class="section-eyebrow">VENDA EM CONJUNTO</span><h2>Cadastro de combos</h2><p>Combos são conjuntos com preço próprio, separados dos produtos individuais.</p></div><div class="catalog-admin-counter"><strong>${S.combos.length}</strong><span>combos cadastrados</span></div></div><div class="main-grid"><section class="panel"><div class="panel-head"><h2>Combos cadastrados</h2><button class="small" data-do="edit-combo" data-id="">+ Novo</button></div>${S.combos.map(x=>`<div class="item"><span class="emoji">🥐</span><div><b>${E(x.name)}</b><small>${EUR(x.price_cents)} · ${x.active?'Ativo':'Oculto'} · Estoque: ${x.stock_qty??'ilimitado'}</small></div><button class="small ghost" data-do="edit-combo" data-id="${x.id}">Editar</button></div>`).join('')}</section><section class="panel"><h2>${c?'Editar combo':'Novo combo'}</h2><p class="muted">Os combos são separados dos individuais. Apenas alimentos e bebidas marcados como 'Permitir também como opção de combo' podem ser escolhidos. Defina essa permissão em Individuais.</p><form id="comboForm" class="form-grid"><input type="hidden" name="id" value="${E(c?.id||'')}"><label>Nome<input name="name" required maxlength="90" value="${E(c?.name||'')}"></label><label>Descrição<input name="description" maxlength="160" value="${E(c?.description||'Escolha 1 alimento e 1 bebida')}"></label><label>Preço em €<input type="number" step="0.01" min="0.01" name="price" required value="${c?(c.price_cents/100).toFixed(2):''}"></label><label>Estoque (vazio = ilimitado)<input type="number" min="0" name="stock" value="${c?.stock_qty??''}"></label><label>Ordem<input type="number" name="sort" value="${c?.sort_order??10}"></label><label>Estado<select name="active"><option value="true" ${c?.active!==false?'selected':''}>Ativo</option><option value="false" ${c?.active===false?'selected':''}>Oculto</option></select></label><button>Guardar combo</button></form></section></div>`;}
-function financePanel(){const month=S.month||DAY().slice(0,7),paid=S.orders.filter(x=>x.order_day.startsWith(month)&&x.payment_status==='paid'&&x.number<9000),ex=S.expenses.filter(x=>x.expense_date.startsWith(month)),a=S.analytics?.month===month?Number(S.analytics.total_cents):paid.reduce((n,x)=>n+x.total_cents,0),paidCount=S.analytics?.month===month?Number(S.analytics.paid_orders):paid.length,b=ex.reduce((n,x)=>n+x.amount_cents,0);return `<div class="panel"><div class="panel-head"><h2>Financeiro</h2><label>Mês <input id="month" type="month" value="${month}"></label></div><div class="metrics"><div>Receita confirmada<b>${EUR(a)}</b></div><div>Despesas<b>${EUR(b)}</b></div><div>Saldo<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paidCount}</b></div></div><p><button class="small ghost" data-do="csv">Exportar CSV</button></p><h3>Registar despesa</h3><form id="expenseForm" class="expense-row"><label>Data<input type="date" name="date" required value="${DAY()}"></label><label>Descrição<input name="description" required maxlength="180"></label><label>Categoria<select name="category"><option>Ingredientes</option><option>Embalagens</option><option>Equipamentos</option><option>Outros</option></select></label><label>Valor (€)<input type="number" name="amount" required min="0.01" step="0.01"></label><button>Adicionar</button></form>${ex.map(x=>`<div class="item"><div><b>${E(x.description)}</b><small>${E(x.expense_date)} · ${E(x.category)}</small></div><strong>${EUR(x.amount_cents)}</strong><button class="small ghost" data-do="delete-expense" data-id="${x.id}">Excluir</button></div>`).join('')||'<p class="muted">Sem despesas neste mês.</p>'}<p class="muted">Saldo é receita recebida menos despesas registadas. Não inclui impostos nem custos não lançados.</p></div>`;}
+function financePanel(){const month=S.month||DAY().slice(0,7),paid=S.orders.filter(x=>x.order_day.startsWith(month)&&x.payment_status==='paid'&&x.number<9000),ex=S.expenses.filter(x=>x.expense_date.startsWith(month)),a=S.analytics?.month===month?Number(S.analytics.total_cents):paid.reduce((n,x)=>n+x.total_cents,0),paidCount=S.analytics?.month===month?Number(S.analytics.paid_orders):paid.length,b=ex.reduce((n,x)=>n+x.amount_cents,0);return CO.render()+`<div class="panel"><div class="panel-head"><h2>Financeiro</h2><label>Mês <input id="month" type="month" value="${month}"></label></div><div class="metrics"><div>Receita confirmada<b>${EUR(a)}</b></div><div>Despesas<b>${EUR(b)}</b></div><div>Saldo<b>${EUR(a-b)}</b></div><div>Pedidos pagos<b>${paidCount}</b></div></div><p><button class="small ghost" data-do="csv">Exportar CSV</button></p><h3>Registar despesa</h3><form id="expenseForm" class="expense-row"><label>Data<input type="date" name="date" required value="${DAY()}"></label><label>Descrição<input name="description" required maxlength="180"></label><label>Categoria<select name="category"><option>Ingredientes</option><option>Embalagens</option><option>Equipamentos</option><option>Outros</option></select></label><label>Valor (€)<input type="number" name="amount" required min="0.01" step="0.01"></label><button>Adicionar</button></form>${ex.map(x=>`<div class="item"><div><b>${E(x.description)}</b><small>${E(x.expense_date)} · ${E(x.category)}</small></div><strong>${EUR(x.amount_cents)}</strong><button class="small ghost" data-do="delete-expense" data-id="${x.id}">Excluir</button></div>`).join('')||'<p class="muted">Sem despesas neste mês.</p>'}<p class="muted">Saldo é receita recebida menos despesas registadas. Não inclui impostos nem custos não lançados.</p></div>`;}
 function qr(){
  const url=location.origin+location.pathname+'#/cliente';
  return `<section class="panel qr-branding">
@@ -616,6 +617,7 @@ if(k==='tab'){
  S.tab=next;
  if(next==='catalogo'&&S.productArea==='marmitex')await MX.mxLoad(api,'marmitex-admin');
  if(next==='estoque')await ST.load(api,S.stockMonth||DAY().slice(0,7));
+ if(next==='financas'&&!CO.getReport())try{await CO.load(api);}catch(err){S.notice='Fechamento: '+err.message;}
  paint();if(next==='estoque')ST.updateForm(root);
  return;
 }
@@ -636,12 +638,53 @@ if(k==='stock-export'){ST.exportCsv();return;}
 if(k==='refresh-stats'){await loadAnalytics(S.month||DAY().slice(0,7));paint();return;}
 if(k==='edit-product'){S.editProduct=id||null;paint();return;}
 if(k==='edit-combo'){S.editCombo=id||null;paint();return;}
-if(k==='toggle'){if(!S.settings.orders_open&&!confirm('Abrir pedidos reais para os clientes?'))return;let r=await api.from('cafe_settings').update({orders_open:!S.settings.orders_open}).eq('id',1);if(r.error)throw r.error;await loadCatalog();paint();return;}
+if(k==='toggle'){
+ const closing=Boolean(S.settings.orders_open);
+ if(!closing&&!confirm('Abrir pedidos reais para os clientes?'))return;
+ if(closing&&!confirm('Fechar o atendimento do Café e gerar o relatório geral? As encomendas de Marmitex continuam a ser geridas separadamente.'))return;
+ S.busy=true;
+ try{
+  const r=await api.from('cafe_settings').update({orders_open:!closing}).eq('id',1);
+  if(r.error)throw r.error;
+  await loadCatalog();
+  if(closing){
+   S.tab='financas';
+   CO.setDate(DAY());
+   try{await Promise.all([CO.load(api),loadOrders()]);S.notice='Atendimento fechado. Relatório geral pronto para compartilhar.';}
+   catch(ex){S.notice='Atendimento fechado, mas houve um problema ao gerar o relatório: '+ex.message;}
+  }
+ }finally{S.busy=false;}
+ paint();return;
+}
+if(k==='open-closeout'){
+ if(S.role!=='admin')return;
+ S.tab='financas';
+ try{await CO.load(api);}catch(ex){S.notice='Relatório: '+ex.message;}
+ paint();return;
+}
+if(k==='closeout-refresh'){
+ if(S.role!=='admin')return;
+ try{await CO.load(api);S.notice='Relatório atualizado.';}catch(ex){S.notice='Erro no relatório: '+ex.message;}
+ paint();return;
+}
+if(k==='closeout-copy'){
+ if(S.role!=='admin')return;
+ await CO.copy();S.notice='Relatório copiado. Pode colar no WhatsApp.';paint();return;
+}
+if(k==='closeout-whatsapp'){
+ if(S.role!=='admin')return;
+ CO.shareWhatsApp();return;
+}
 if(k==='delete-expense'){if(!confirm('Excluir despesa?'))return;let r=await api.from('cafe_expenses').delete().eq('id',id);if(r.error)throw r.error;await loadOrders();paint();return;}
 if(k==='csv'){csv();return;}if(k==='print'){window.print();return;}
 }catch(ex){S.busy=false;S.notice='Erro: '+ex.message;paint();}});
 root.addEventListener('input',e=>{if(e.target?.id==='product-icon-input')updateProductIconSelection();});
 root.addEventListener('change',e=>{let t=e.target;
+if(t.id==='closeout-date'){
+ try{CO.setDate(t.value);paint();}
+ catch(ex){S.notice='Data do relatório: '+ex.message;paint();}
+ return;
+}
 if(t.id==='stock-kind'||t.id==='stock-product'){ST.updateForm(root);return;}
 if(t.id==='stock-month'){S.stockMonth=t.value;ST.load(api,S.stockMonth).then(()=>{paint();ST.updateForm(root);}).catch(ex=>{S.notice='Erro no estoque: '+ex.message;paint();});return;}
 if(MX.mxChange(t)){paint();return;}if(t.id==='food')S.food=t.value;if(t.id==='drink')S.drink=t.value;if(t.id==='qty')S.qty=Math.max(1,Math.min(20,Number(t.value)||1));if(t.id==='month'){S.month=t.value;S.analytics=null;paint();loadAnalytics(S.month).then(()=>paint()).catch(ex=>{S.analyticsError=ex.message;paint();});}
