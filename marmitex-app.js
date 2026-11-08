@@ -1,5 +1,5 @@
 import {CONFIG} from './config.js';
-import * as MX from './marmitex.js?v=5.1';
+import * as MX from './marmitex.js?v=5.3';
 
 const root=document.querySelector('#marmitex-root');
 const safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
