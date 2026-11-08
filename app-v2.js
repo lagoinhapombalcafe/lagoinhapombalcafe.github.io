@@ -1,6 +1,6 @@
 import {CONFIG} from './config.js';
-import * as MX from './marmitex.js?v=5.1';
-import * as ST from './stock.js?v=5.1';
+import * as MX from './marmitex.js?v=5.3';
+import * as ST from './stock.js?v=5.3';
 const $=s=>document.querySelector(s), root=$('#app');
 const S={products:[],combos:[],settings:{orders_open:false},cart:[],qty:1,food:'',drink:'',combo:'',role:null,user:null,orders:[],expenses:[],ready:[],ticket:null,tab:'visao',productArea:'cafe',cafeView:'itens',editProduct:null,editCombo:null,month:'',analytics:null,analyticsError:'',stockMonth:'',busy:false,notice:'',checkoutOpen:false,customerName:'',loginEmail:''};
 let api;
@@ -365,7 +365,7 @@ function admin(){
 }
 function marmitexAdminPanel(){
  return `<section class="admin-marmitex" aria-label="Cadastro e gestão de marmitex">
- <div class="admin-marmitex-intro"><div><strong>Cadastro de Marmitex</strong><p>Configure os domingos, cadastre pratos, preços e quantidades. As encomendas e o caixa das marmitex são independentes das vendas do café.</p></div><a href="./marmitex.html" target="_blank" rel="noopener noreferrer">Ver página de encomendas ↗</a></div>
+ <div class="admin-marmitex-intro"><div><strong>Cadastro de Marmitex</strong><p>Configure os domingos, cadastre pratos, preços e quantidades. O Caixa de Marmitex continua separado, mas as reservas e as vendas do Café partilham o mesmo estoque por prato.</p></div><a href="./marmitex.html" target="_blank" rel="noopener noreferrer">Ver página de encomendas ↗</a></div>
  ${MX.mxRender('marmitex-admin',S.role)}
  </section>`;
 }
