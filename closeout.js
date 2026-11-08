@@ -112,6 +112,7 @@ export async function copy(){
 export function shareWhatsApp(){
  // Ação direta do utilizador, sem guardar número de telefone ou partilhar com o servidor.
  const url='https://wa.me/?text='+encodeURIComponent(formatText());
- const tab=window.open(url,'_blank','noopener,noreferrer');
- if(!tab)window.location.href=url;
+ const tab=window.open(url,'_blank');
+ if(tab)tab.opener=null;
+ else window.location.assign(url);
 }
