@@ -119,6 +119,8 @@ function mxAdmin(){
  const items=(dash.items||[]).filter(i=>wk&&i.week_id===wk.id);
  const orders=(dash.orders||[]).filter(o=>wk&&o.week_id===wk.id&&o.status!=='cancelled');
  const editing=items.find(i=>i.id===M.editId)||null;
+ const linkedProducts=(dash.products||[]).filter(p=>p.active||p.id===editing?.product_id);
+ const stockProductOptions=linkedProducts.map(p=>'<option value="'+mxEsc(p.id)+'" '+(editing?.product_id===p.id?'selected':'')+'>'+mxEsc(p.name)+' · disponível: '+Number(p.stock_qty)+' un.</option>').join('');
  const total=orders.reduce((s,o)=>s+o.total_cents,0);
  const paid=orders.filter(o=>o.payment_status==='paid').reduce((s,o)=>s+o.total_cents,0);
  const dates=(dash.weeks||[]).map(w=>'<option value="'+mxEsc(w.id)+'" '+(wk&&w.id===wk.id?'selected':'')+'>'+mxEsc(mxFormatDate(w.pickup_date))+'</option>').join('');
@@ -129,10 +131,10 @@ function mxAdmin(){
  }
  const alreadyReserved=items.reduce((n,i)=>n+Number(i.reserved_qty||0),0);
  const notDelivered=items.reduce((n,i)=>n+(toDeliver.get(String(i.id))||0),0);
- const reservationOverview=wk?'<section class="mx-panel mx-reservation-overview"><div class="mx-panel-head"><div><h2>Reservas da semana</h2><p class="mx-footnote">Quantidades confirmadas para '+mxEsc(mxFormatDate(wk.pickup_date))+'. Esta é uma lista independente do estoque do café.</p></div></div>'+
+ const reservationOverview=wk?'<section class="mx-panel mx-reservation-overview"><div class="mx-panel-head"><div><h2>Reservas da semana</h2><p class="mx-footnote">Quantidades confirmadas para '+mxEsc(mxFormatDate(wk.pickup_date))+'. As reservas de Marmitex e as vendas do Café descontam o mesmo estoque por produto.</p></div></div>'+
  '<div class="mx-reservation-kpis"><div><span>Já encomendadas</span><strong>'+alreadyReserved+'</strong></div><div><span>Ainda por entregar</span><strong>'+notDelivered+'</strong></div><div><span>Já entregues</span><strong>'+(alreadyReserved-notDelivered)+'</strong></div></div>'+
  '<div class="mx-reservation-scroll"><table class="mx-reservation-table"><thead><tr><th>Prato</th><th>Reservadas</th><th>Por retirar</th><th>Entregues</th><th>Ainda disponíveis</th></tr></thead><tbody>'+
- items.map(i=>{const n=Number(i.reserved_qty||0),pending=toDeliver.get(String(i.id))||0,delivered=done.get(String(i.id))||0,remaining=i.capacity===null?'Sem limite':Math.max(0,Number(i.capacity)-n)+' un.';return '<tr><td><strong>'+mxEsc(i.name)+'</strong></td><td><b class="mx-reserved-count">'+n+'</b></td><td><b>'+pending+'</b></td><td>'+delivered+'</td><td>'+remaining+'</td></tr>';}).join('')+
+ items.map(i=>{const n=Number(i.reserved_qty||0),pending=toDeliver.get(String(i.id))||0,delivered=done.get(String(i.id))||0,remaining=Number(i.available||0)+' un.';return '<tr><td><strong>'+mxEsc(i.name)+'</strong></td><td><b class="mx-reserved-count">'+n+'</b></td><td><b>'+pending+'</b></td><td>'+delivered+'</td><td>'+remaining+'</td></tr>';}).join('')+
  '</tbody></table></div><p class="mx-footnote">As reservas são contabilizadas ao fazer a encomenda e devolvidas ao cancelar. Entregar não liberta a vaga da semana.</p></section>':'';
  return '<section class="mx-hero"><div class="mx-kicker">ADMINISTRADOR · ENCOMENDAS SEMANAIS</div><h1>Gestão de <em>Marmitex.</em></h1><p>Defina o domingo, o prazo para encomendar e os pratos. Só abra quando os preços e as quantidades estiverem corretos.</p></section>'+mxStaffNav()+mxMsg()+
  '<div class="mx-qr-admin"><a href="./marmitex-qr.html" target="_blank" rel="noopener">◼ Ver e imprimir QR Code exclusivo das marmitex ↗</a></div>'+ 
@@ -143,17 +145,18 @@ function mxAdmin(){
  '<label class="mx-check"><input type="checkbox" name="orders_open" '+(wk?.orders_open?'checked':'')+'> Abrir encomendas desta semana</label>'+
  '<button type="submit" class="mx-primary" '+(M.busy?'disabled':'')+'>Guardar configuração</button></form>'+
  (dates?'<label class="mx-field">Semanas já cadastradas<select id="mx-week-select">'+dates+'</select></label>':'')+
- '<p class="mx-footnote">Alterar o domingo no formulário cria uma semana diferente. O café permanece independente.</p></div>'+
+ '<p class="mx-footnote">Alterar o domingo no formulário cria uma semana diferente. O caixa é separado, mas o estoque é partilhado.</p></div>'+
  '<div class="mx-panel"><h2>2 · Cardápio da semana</h2>'+
  (!wk?'<p>Guarde primeiro a data de domingo para cadastrar pratos.</p>':
- '<form id="mx-item-form"><label class="mx-field">Nome do prato<input name="name" maxlength="100" required placeholder="Ex.: Marmitex de frango" value="'+mxEsc(editing?.name||'')+'"></label>'+
+ '<form id="mx-item-form"><label class="mx-field">Nome do prato<input name="name" maxlength="100" required placeholder="Ex.: Marmitex de frango" value="'+mxEsc(editing?.name||'')+'"></label>'+ 
+ '<label class="mx-field">Produto associado ao estoque do Café<select name="product_id" required><option value="">Selecione o produto que será descontado</option>'+stockProductOptions+'</select></label><p class="mx-footnote">Cada encomenda reduz o saldo do produto escolhido. Se faltar um produto, cadastre-o primeiro em Produtos Café e defina o estoque inicial.</p>'+
  '<label class="mx-field">Descrição<input name="description" maxlength="500" placeholder="Acompanhamentos incluídos" value="'+mxEsc(editing?.description||'')+'"></label>'+
  '<div class="mx-form-pair"><label class="mx-field">Preço (€)<input name="price" type="number" min="0.01" max="10000" step="0.01" required value="'+(editing?(editing.price_cents/100).toFixed(2):'')+'"></label>'+
  '<label class="mx-field">Limite de unidades (vazio = ilimitado)<input name="capacity" type="number" min="1" step="1" value="'+mxEsc(editing?.capacity??'')+'"></label></div>'+
  '<label class="mx-check"><input name="active" type="checkbox" '+(!editing||editing.active?'checked':'')+'> Prato ativo</label>'+
  '<button type="submit" class="mx-primary" '+(M.busy?'disabled':'')+'>'+(editing?'Guardar alterações':'Adicionar prato')+'</button>'+
  (editing?'<button type="button" class="mx-quiet" data-do="mx" data-act="new-item">Cancelar edição</button>':'')+'</form>')+
- '<div class="mx-admin-items">'+items.map(i=>'<article><div><strong>'+mxEsc(i.name)+'</strong><small>'+mxEUR(i.price_cents)+' · '+('Reservadas: '+Number(i.reserved_qty||0)+' · Disponíveis: '+(i.capacity===null?'sem limite':Math.max(0,Number(i.capacity)-Number(i.reserved_qty||0))))+' · '+(i.active?'Ativo':'Inativo')+'</small></div><button type="button" data-do="mx" data-act="edit-item" data-id="'+mxEsc(i.id)+'">Editar</button></article>').join('')+'</div></div></section>'+
+ '<div class="mx-admin-items">'+items.map(i=>'<article><div><strong>'+mxEsc(i.name)+'</strong><small>'+mxEUR(i.price_cents)+' · '+('Reservadas: '+Number(i.reserved_qty||0)+' · Disponíveis em ambos os canais: '+Number(i.available||0)+' · Estoque livre: '+(i.stock_qty===null?'Não vinculado':i.stock_qty+' un.'))+' · '+(i.active?'Ativo':'Inativo')+'</small></div><button type="button" data-do="mx" data-act="edit-item" data-id="'+mxEsc(i.id)+'">Editar</button></article>').join('')+'</div></div></section>'+
  (wk?'<section class="mx-panel"><h2>Resumo · '+mxEsc(mxFormatDate(wk.pickup_date))+'</h2>'+
  '<div class="mx-stats"><div><small>Encomendas</small><b>'+orders.length+'</b></div><div><small>Unidades</small><b>'+orders.reduce((n,o)=>n+(o.items||[]).reduce((k,l)=>k+Number(l.quantity),0),0)+'</b></div><div><small>Previsto</small><b>'+mxEUR(total)+'</b></div><div><small>Recebido</small><b>'+mxEUR(paid)+'</b></div></div>'+
  '<p class="mx-footnote">Para consultar os nomes, os pagamentos e as retiradas, abra o Caixa. Não há painel de cozinha.</p></section>':'');
@@ -249,7 +252,9 @@ async function mxSubmit(api,f,view,role){
    const cap=raw===''?null:Number(raw);
    if(!Number.isInteger(price)||price<1||price>1000000)throw Error('Preço inválido');
    if(cap!==null&&(!Number.isInteger(cap)||cap<1))throw Error('Quantidade inválida');
-   await mxRPC(api,'mx_admin_item',{p_week_id:wk.id,p_id:M.editId||null,p_name:String(d.get('name')||''),p_description:String(d.get('description')||''),p_price_cents:price,p_capacity:cap,p_active:d.has('active'),p_sort_order:0});
+   const productId=String(d.get('product_id')||'');
+   if(!productId)throw Error('Associe a Marmitex ao produto correspondente no estoque do Café.');
+   await mxRPC(api,'mx_admin_item_linked',{p_week_id:wk.id,p_id:M.editId||null,p_name:String(d.get('name')||''),p_description:String(d.get('description')||''),p_price_cents:price,p_capacity:cap,p_active:d.has('active'),p_sort_order:0,p_product_id:productId});
    M.editId=null;M.notice='Prato guardado com sucesso.';
    await mxLoad(api,'marmitex-admin');
   }
