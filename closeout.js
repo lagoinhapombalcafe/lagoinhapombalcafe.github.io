@@ -1,5 +1,5 @@
-// Lagoinha Café — fechamento geral (Café + Marmitex), v5.4.
-// A fonte dos números é a RPC protegida cafe_general_closeout_v1 no Supabase.
+// Lagoinha Café — fechamento geral (Café + Marmitex), v5.5.
+// A fonte dos números é a RPC protegida cafe_general_closeout_v2 no Supabase.
 const state={selectedDate:'',report:null,loading:false,error:''};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=v=>(Number(v||0)/100).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
@@ -18,7 +18,7 @@ export async function load(api,date){
  const selected=getDate();
  state.loading=true;state.error='';
  try{
-  const result=await api.rpc('cafe_general_closeout_v1',{p_day:selected});
+  const result=await api.rpc('cafe_general_closeout_v2',{p_day:selected});
   if(result.error)throw new Error(result.error.message||'Não foi possível gerar o relatório.');
   if(!result.data||result.data.day!==selected)throw new Error('O relatório não corresponde à data escolhida.');
   state.report=result.data;
@@ -79,6 +79,7 @@ export function formatText(report){
   '*Total Café: '+money(c.total_cents)+'*','',
   '🍱 *MARMITEX*',
   'Pedidos pagos: '+Number(m.orders||0),
+  ...(Number(m.cafe_paid_orders||0)?['Vendas recebidas pelo Caixa do Café: '+Number(m.cafe_paid_orders||0)]:[]),
   'Unidades: '+Number(m.units||0),
   ...items(m.items).map(x=>'• '+x.quantity+'× '+x.name+' — '+money(x.total_cents)),
   '*Total Marmitex: '+money(m.total_cents)+'*','',
